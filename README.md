@@ -14,7 +14,7 @@ It is one file so you can copy into a large project that doesn't allow live-load
 Once you loaded the file:
 
 ```bash
-pry#> rov(complex_object)
+pry#> ROV[complex_object]
 ```
 
 Keys:

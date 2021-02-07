@@ -130,6 +130,12 @@ class ROV
     end
   end
 
+  class << self
+    def [](obj)
+      ROV.new(obj).loop
+    end
+  end
+
   def initialize(obj)
     @root_ctx = @active_ctx = Ctx.new(obj, nil)
     @is_running = true
@@ -190,5 +196,3 @@ class ROV
     char
   end
 end
-
-def rov(obj); ROV.new(obj).loop; end

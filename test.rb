@@ -21,4 +21,4 @@ end
 
 c = Company.new
 
-rov(c)
+ROV[c]
