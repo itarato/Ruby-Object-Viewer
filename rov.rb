@@ -1,4 +1,15 @@
 class ROV
+  class Util
+    class << self
+      def color(s, color_code); "\e[#{color_code}m#{s}\e[0m"; end
+      def red(s); color(s, 91); end
+      def blue(s); color(s, 94); end
+      def yellow(s); color(s, 93); end
+      def magenta(s); color(s, 95); end
+      def bold(s); color(s, 1); end
+    end
+  end
+
   class Ctx
     attr_reader :parent_ctx
 
@@ -85,17 +96,20 @@ class ROV
     def pretty_print(active_ctx, indent_size = 0)
       indent = ' ' * indent_size
 
-      puts "#{indent} #{tag}"
       elem_names.zip(@children_ctx).each_with_index do |(elem_name, child_ctx), index|
-        active_pos_marker = (self == active_ctx && @selection == index) ? '>' : ' '
-        tag_suffix = if child_ctx.nil?
-          value_suffix = can_dig_at?(index) ? '' : " = #{elem_at(index).to_s}"
-          " (#{elem_at(index).class.name})#{value_suffix}"
-        else
-          ''
-        end
+        value_suffix = can_dig_at?(index) ? '' : " = #{elem_at(index).to_s}"
+        tag_suffix = " (#{elem_at(index).class.name})#{value_suffix}"
 
-        puts "#{indent}#{active_pos_marker}- #{elem_name}#{tag_suffix}"
+        active_pos_marker = (self == active_ctx && @selection == index) ? '>' : ' '
+        nesting_symbol = index == elem_size - 1 ? '└' : '├'
+
+        puts <<~LINE.lines(chomp: true).join
+          #{indent}
+          #{Util.yellow(active_pos_marker)}
+          #{nesting_symbol} 
+          #{Util.blue(elem_name)}
+          #{Util.magenta(tag_suffix)}
+        LINE
 
         unless child_ctx.nil?
           child_ctx.pretty_print(active_ctx, indent_size + 2)
@@ -136,6 +150,7 @@ class ROV
 
   def print_root
     print `clear`
+    puts Util.magenta(@root_ctx.tag)
     @root_ctx.pretty_print(@active_ctx)
   end
 
@@ -166,4 +181,4 @@ end
 
 c = Company.new
 
-# rov(c)
+rov(c)
