@@ -185,26 +185,3 @@ class ROV
 end
 
 def rov(obj); ROV.new(obj).loop; end
-
-class User
-  def initialize
-    @uservar1 = 1
-    @uservar2 = [1, 2, 3]
-  end
-end
-
-class Company
-  def initialize
-    @users = {
-      john: User.new,
-    }
-    @heads = {
-      "foo" => 'bar',
-      "bax" => 'xe',
-    }
-  end
-end
-
-c = Company.new
-
-rov(c)
