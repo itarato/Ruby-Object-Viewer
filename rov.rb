@@ -172,7 +172,8 @@ class ROV
       current_ctx = current_ctx.parent_ctx
     end
 
-    puts Util.green(path.join)
+    puts ''
+    puts "Copy[ _#{Util.green(path.join)} ]"
   end
 
   def read_command
