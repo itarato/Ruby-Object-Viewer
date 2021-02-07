@@ -3,8 +3,9 @@ class ROV
     class << self
       def color(s, color_code); "\e[#{color_code}m#{s}\e[0m"; end
       def red(s); color(s, 91); end
-      def blue(s); color(s, 94); end
+      def green(s); color(s, 92); end
       def yellow(s); color(s, 93); end
+      def blue(s); color(s, 94); end
       def magenta(s); color(s, 95); end
       def bold(s); color(s, 1); end
     end
@@ -75,6 +76,17 @@ class ROV
       elem_at(@selection)
     end
 
+    def selected_elem_copyable_name
+      case @obj
+      when Hash
+        "[#{@obj.keys[@selection].inspect}]"
+      when Enumerable
+        "[#{@selection}]"
+      else
+        ".#{@obj.instance_variables[@selection][1..-1]}"
+      end
+    end
+
     def can_dig_at?(index)
       case elem_at(index)
       when String, Numeric, TrueClass, FalseClass, NilClass
@@ -105,7 +117,7 @@ class ROV
 
         puts <<~LINE.lines(chomp: true).join
           #{indent}
-          #{Util.yellow(active_pos_marker)}
+          #{Util.bold(Util.yellow(active_pos_marker))}
           #{nesting_symbol} 
           #{Util.blue(elem_name)}
           #{Util.magenta(tag_suffix)}
@@ -152,6 +164,15 @@ class ROV
     print `clear`
     puts Util.magenta(@root_ctx.tag)
     @root_ctx.pretty_print(@active_ctx)
+
+    current_ctx = @active_ctx
+    path = []
+    until current_ctx.nil?
+      path.unshift(current_ctx.selected_elem_copyable_name)
+      current_ctx = current_ctx.parent_ctx
+    end
+
+    puts Util.green(path.join)
   end
 
   def read_command
@@ -175,6 +196,10 @@ class Company
   def initialize
     @users = {
       john: User.new,
+    }
+    @heads = {
+      "foo" => 'bar',
+      "bax" => 'xe',
     }
   end
 end
