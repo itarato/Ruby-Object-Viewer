@@ -90,7 +90,7 @@ class ROV
 
     def can_dig_at?(index)
       case elem_at(index)
-      when String, Numeric, TrueClass, FalseClass, NilClass
+      when Symbol, String, Numeric, TrueClass, FalseClass, NilClass
         false
       else
         true
@@ -156,15 +156,13 @@ class ROV
         puts @obj
       end
     end
+
+    active_path
   end
 
   private
 
-  def print_root
-    print `clear`
-    puts Util.magenta(@root_ctx.tag)
-    @root_ctx.pretty_print(@active_ctx)
-
+  def active_path
     current_ctx = @active_ctx
     path = []
     until current_ctx.nil?
@@ -172,8 +170,17 @@ class ROV
       current_ctx = current_ctx.parent_ctx
     end
 
+    path.join
+  end
+
+  def print_root
+    print `clear`
+
+    puts Util.magenta(@root_ctx.tag)
+    @root_ctx.pretty_print(@active_ctx)
+
     puts ''
-    puts "Copy[ _#{Util.green(path.join)} ]"
+    puts "Copy[ _#{Util.green(active_path)} ]"
   end
 
   def read_command
