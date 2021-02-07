@@ -18,8 +18,8 @@ pry#> rov(complex_object)
 ```
 
 Keys:
-- <key>w</key>: go to prev sibling
-- <key>s</key>: go to next sibling
-- <key>a</key>: go to parent
-- <key>d</key>: go to child
-- <key>q</key>: exit
+- <kbd>w</kbd>: go to prev sibling
+- <kbd>s</kbd>: go to next sibling
+- <kbd>a</kbd>: go to parent
+- <kbd>d</kbd>: go to child
+- <kbd>q</kbd>: exit
