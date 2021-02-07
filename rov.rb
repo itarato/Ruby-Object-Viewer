@@ -8,6 +8,7 @@ class ROV
       def blue(s); color(s, 94); end
       def magenta(s); color(s, 95); end
       def bold(s); color(s, 1); end
+      def dim(s); color(s, 22); end
     end
   end
 
@@ -105,9 +106,7 @@ class ROV
       @children_ctx[@selection] ||= Ctx.new(selected_elem, self)
     end
 
-    def pretty_print(active_ctx, indent_size = 0)
-      indent = ' ' * indent_size
-
+    def pretty_print(active_ctx, indent = '  ')
       elem_names.zip(@children_ctx).each_with_index do |(elem_name, child_ctx), index|
         value_suffix = can_dig_at?(index) ? '' : " = #{elem_at(index).to_s}"
         tag_suffix = " (#{elem_at(index).class.name})#{value_suffix}"
@@ -124,7 +123,8 @@ class ROV
         LINE
 
         unless child_ctx.nil?
-          child_ctx.pretty_print(active_ctx, indent_size + 2)
+          tree_guide = index == elem_size - 1 ? ' ' : Util.dim(':')
+          child_ctx.pretty_print(active_ctx, indent + " #{tree_guide}")
         end
       end
     end
