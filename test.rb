@@ -7,8 +7,11 @@ class User
   end
 end
 
+class Nothing; end
+
 class Company
   def initialize
+    @nothing = Nothing.new
     @users = {
       john: User.new,
     }
@@ -16,6 +19,8 @@ class Company
       "foo" => 'bar',
       "bax" => 'xe',
     }
+    @empty_hash = {}
+    @empty_array = []
   end
 end
 

@@ -1,3 +1,8 @@
+"""
+TODOS:
+- fix empty hash and array
+"""
+
 class ROV
   class Util
     class << self
@@ -80,7 +85,7 @@ class ROV
     def selected_elem_copyable_name
       case @obj
       when Hash
-        "[#{@obj.keys[@selection].inspect}]"
+        "[#{@obj.keys[@selection].inspect.gsub('"', '\'')}]"
       when Enumerable
         "[#{@selection}]"
       else
@@ -89,11 +94,14 @@ class ROV
     end
 
     def can_dig_at?(index)
-      case elem_at(index)
-      when Symbol, String, Numeric, TrueClass, FalseClass, NilClass
+      elem = elem_at(index)
+      case elem
+      when Regexp, Proc, Symbol, String, Numeric, TrueClass, FalseClass, NilClass, Time, Range
         false
+      when Enumerable
+        elem.to_a.size > 0
       else
-        true
+        elem.instance_variables.size > 0
       end
     end
 
@@ -114,16 +122,19 @@ class ROV
         active_pos_marker = (self == active_ctx && @selection == index) ? '>' : ' '
         nesting_symbol = index == elem_size - 1 ? '└' : '├'
 
+        tree_more_symbol = can_dig_at?(index) ? '+ ': ''
+
         puts <<~LINE.lines(chomp: true).join
           #{indent}
           #{Util.bold(Util.yellow(active_pos_marker))}
           #{nesting_symbol} 
+          #{tree_more_symbol}
           #{Util.blue(elem_name)}
           #{Util.magenta(tag_suffix)}
         LINE
 
         unless child_ctx.nil?
-          tree_guide = index == elem_size - 1 ? ' ' : Util.dim(':')
+          tree_guide = index == elem_size - 1 ? ' ' : '¦'
           child_ctx.pretty_print(active_ctx, indent + " #{tree_guide}")
         end
       end
@@ -142,6 +153,8 @@ class ROV
   end
 
   def loop
+    return unless @root_ctx.elem_size > 0
+
     while @is_running
       print_root
 
