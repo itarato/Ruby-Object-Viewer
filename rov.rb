@@ -96,8 +96,6 @@ class ROV
     def can_dig_at?(index)
       elem = elem_at(index)
       case elem
-      when Regexp, Proc, Symbol, String, Numeric, TrueClass, FalseClass, NilClass, Time, Range
-        false
       when Enumerable
         elem.to_a.size > 0
       else
