@@ -1,6 +1,6 @@
 """
 TODOS:
-- fix empty hash and array
+- small screens (top part scrolled out)
 """
 
 class ROV
@@ -14,6 +14,8 @@ class ROV
       def magenta(s); color(s, 95); end
       def bold(s); color(s, 1); end
       def dim(s); color(s, 22); end
+      def console_lines; `tput lines`.to_i; end
+      def console_cols; `tput cols`.to_i; end
     end
   end
 
