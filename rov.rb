@@ -1,6 +1,5 @@
 """
 TODOS:
-- small screens (top part scrolled out)
 """
 
 class ROV
@@ -12,8 +11,10 @@ class ROV
       def yellow(s); color(s, 93); end
       def blue(s); color(s, 94); end
       def magenta(s); color(s, 95); end
+      def cyan(s); color(s, 96); end
       def bold(s); color(s, 1); end
       def dim(s); color(s, 22); end
+      def invert(s); color(s, 7); end
       def console_lines; `tput lines`.to_i; end
       def console_cols; `tput cols`.to_i; end
     end
@@ -114,30 +115,42 @@ class ROV
       @children_ctx[@selection] ||= Ctx.new(selected_elem, self)
     end
 
-    def pretty_print(active_ctx, indent = '  ')
-      elem_names.zip(@children_ctx).each_with_index do |(elem_name, child_ctx), index|
-        value_suffix = can_dig_at?(index) ? '' : " = #{elem_at(index).to_s}"
-        tag_suffix = " (#{elem_at(index).class.name})#{value_suffix}"
+    def undig
+      @children_ctx[@selection] = nil
+    end
 
-        active_pos_marker = (self == active_ctx && @selection == index) ? '>' : ' '
+    #
+    # @return [String, Boolean]
+    #
+    def pretty_print(active_ctx, indent = '  ')
+      out = []
+
+      elem_names.zip(@children_ctx).each_with_index do |(elem_name, child_ctx), index|
+        value_suffix = can_dig_at?(index) ? '' : " = #{Util.cyan(elem_at(index).to_s)}"
+        tag_suffix = " (#{Util.magenta(elem_at(index).class.name)})#{value_suffix}"
+
+        is_active_line = self == active_ctx && @selection == index
+        active_pos_marker = is_active_line ? '>' : ' '
         nesting_symbol = index == elem_size - 1 ? '└' : '├'
 
-        tree_more_symbol = can_dig_at?(index) ? '+ ': ''
+        tree_more_symbol = can_dig_at?(index) ? '+ ': ' '
 
-        puts <<~LINE.lines(chomp: true).join
+        out << [<<~LINE.lines(chomp: true).join, is_active_line]
           #{indent}
           #{Util.bold(Util.yellow(active_pos_marker))}
-          #{nesting_symbol} 
+          #{nesting_symbol}─
           #{tree_more_symbol}
-          #{Util.blue(elem_name)}
-          #{Util.magenta(tag_suffix)}
+          #{is_active_line ? Util.invert(Util.blue(elem_name)) : Util.blue(elem_name)}
+          #{tag_suffix}
         LINE
 
         unless child_ctx.nil?
           tree_guide = index == elem_size - 1 ? ' ' : '¦'
-          child_ctx.pretty_print(active_ctx, indent + " #{tree_guide}")
+          out += child_ctx.pretty_print(active_ctx, indent + " #{tree_guide}")
         end
       end
+
+      out
     end
   end
 
@@ -171,6 +184,8 @@ class ROV
         @active_ctx = @active_ctx.parent_ctx unless @active_ctx.parent_ctx.nil?
       when 'd'
         @active_ctx = @active_ctx.dig if @active_ctx.can_dig?
+      when 'e'
+        @active_ctx.undig
       else
         puts @obj
       end
@@ -195,8 +210,27 @@ class ROV
   def print_root
     print `clear`
 
-    puts Util.magenta(@root_ctx.tag)
-    @root_ctx.pretty_print(@active_ctx)
+    lines = []
+
+    lines << [Util.magenta(@root_ctx.tag), false]
+    lines += @root_ctx.pretty_print(@active_ctx)
+
+    active_line_index = lines.index { |_, is_active| is_active }
+
+    padding = (Util.console_lines - 4) / 2
+
+    if active_line_index <= padding
+      from = 0
+      to = [padding * 2 + 1, lines.size - 1].min
+    elsif active_line_index + padding >= lines.size
+      to = lines.size - 1
+      from = [0, to - 1 - 2 * padding].max
+    else
+      from = [0, active_line_index - padding - 1].max
+      to = [active_line_index + padding, lines.size].min
+    end
+
+    puts lines[from..to].map { |the_string, _| the_string }.join("\n")
 
     puts ''
     puts "Copy[ _#{Util.green(active_path)} ]"

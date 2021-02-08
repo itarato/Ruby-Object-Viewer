@@ -3,7 +3,7 @@ require_relative 'rov'
 class User
   def initialize
     @uservar1 = 1
-    @uservar2 = [1, 2, 3]
+    @uservar2 = 100.times.to_a
   end
 end
 

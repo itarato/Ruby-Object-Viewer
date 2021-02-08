@@ -22,4 +22,5 @@ Keys:
 - <kbd>s</kbd>: go to next sibling
 - <kbd>a</kbd>: go to parent
 - <kbd>d</kbd>: go to child
+- <kbd>e</kbd>: close child
 - <kbd>q</kbd>: exit
