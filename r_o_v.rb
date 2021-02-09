@@ -1,20 +1,16 @@
-"""
-TODOS:
-"""
-
 class ROV
   class Util
     class << self
-      def color(s, color_code); "\e[#{color_code}m#{s}\e[0m"; end
-      def red(s); color(s, 91); end
-      def green(s); color(s, 92); end
-      def yellow(s); color(s, 93); end
-      def blue(s); color(s, 94); end
-      def magenta(s); color(s, 95); end
-      def cyan(s); color(s, 96); end
-      def bold(s); color(s, 1); end
-      def dim(s); color(s, 22); end
-      def invert(s); color(s, 7); end
+      def escape(s, color_code); "\e[#{color_code}m#{s}\e[0m"; end
+      def red(s); escape(s, 91); end
+      def green(s); escape(s, 92); end
+      def yellow(s); escape(s, 93); end
+      def blue(s); escape(s, 94); end
+      def magenta(s); escape(s, 95); end
+      def cyan(s); escape(s, 96); end
+      def bold(s); escape(s, 1); end
+      def dim(s); escape(s, 22); end
+      def invert(s); escape(s, 7); end
       def console_lines; `tput lines`.to_i; end
       def console_cols; `tput cols`.to_i; end
     end
@@ -31,10 +27,6 @@ class ROV
       @children_ctx = [nil] * elem_size
     end
 
-    def tag
-      @obj.class.name
-    end
-
     def select_next
       return unless elem_size > 0
       @selection = (@selection + 1) % elem_size
@@ -45,21 +37,12 @@ class ROV
       @selection = (@selection - 1) % elem_size
     end
 
-    def select_first
-      @selection = 0
-    end
 
-    def select_last
-      @selection = elem_size - 1
-    end
-
-    def at_last_child?
-      @selection == elem_size - 1
-    end
-
-    def at_first_child?
-      @selection == 0
-    end
+    def tag; @obj.class.name; end
+    def select_first; @selection = 0; end
+    def select_last; @selection = elem_size - 1; end
+    def at_last_child?; @selection == elem_size - 1; end
+    def at_first_child?; @selection == 0; end
 
     def elem_size
       @elem_size ||= case @obj
@@ -125,9 +108,7 @@ class ROV
       end
     end
 
-    def already_digged?
-      !@children_ctx[@selection].nil?
-    end
+    def already_digged?; !@children_ctx[@selection].nil?; end
 
     def can_dig_at?(index)
       elem = elem_at(index)
@@ -139,9 +120,7 @@ class ROV
       end
     end
 
-    def can_dig?
-      can_dig_at?(@selection)
-    end
+    def can_dig?; can_dig_at?(@selection); end
 
     def dig
       raise "Child is not diggable" unless can_dig?
@@ -157,9 +136,7 @@ class ROV
       end
     end
 
-    def undig
-      @children_ctx[@selection] = nil
-    end
+    def undig; @children_ctx[@selection] = nil; end
 
     def undig_all
       elem_size.times { |i| @children_ctx[i] = nil }
