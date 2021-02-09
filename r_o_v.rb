@@ -377,32 +377,38 @@ class ROV
   end
 
   def print_root
-    print `clear`
+    clear_terminal
 
-    lines = []
-
-    lines << [Util.magenta(@root_ctx.tag), false]
+    lines = [Util.magenta(@root_ctx.tag), false]
     lines += @root_ctx.pretty_print(@active_ctx)
 
     active_line_index = lines.index { |_, is_active| is_active }
 
+    puts lines[presentable_line_range(active_line_index, lines.size)].map { |the_string, _| the_string }.join("\n")
+
+    puts ''
+    puts "Copy[ _#{Util.green(active_path)} ]"
+  end
+
+  def presentable_line_range(active_line_index, len)
     padding = (Util.console_lines - 4) / 2
 
     if active_line_index <= padding
       from = 0
-      to = [padding * 2 + 1, lines.size - 1].min
-    elsif active_line_index + padding >= lines.size
-      to = lines.size - 1
+      to = [padding * 2 + 1, len - 1].min
+    elsif active_line_index + padding >= len
+      to = len - 1
       from = [0, to - 1 - 2 * padding].max
     else
       from = [0, active_line_index - padding - 1].max
-      to = [active_line_index + padding, lines.size].min
+      to = [active_line_index + padding, len].min
     end
 
-    puts lines[from..to].map { |the_string, _| the_string }.join("\n")
+    from..to
+  end
 
-    puts ''
-    puts "Copy[ _#{Util.green(active_path)} ]"
+  def clear_terminal
+    print `clear`
   end
 
   def read_command
