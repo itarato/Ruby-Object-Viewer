@@ -58,18 +58,18 @@ class ROV
     def initialize(obj, parent_ctx)
       @obj = obj
       @parent_ctx = parent_ctx
-      @selection = elem_size > 0 ? 0 : nil
-      @children_ctx = [nil] * elem_size
+      @selection = children_size > 0 ? 0 : nil
+      @children_ctx = [nil] * children_size
     end
 
     def select_next
-      return unless elem_size > 0
-      self.selection = (selection + 1) % elem_size
+      return unless children_size > 0
+      self.selection = (selection + 1) % children_size
     end
 
     def select_prev
-      return unless elem_size > 0
-      self.selection = (selection - 1) % elem_size
+      return unless children_size > 0
+      self.selection = (selection - 1) % children_size
     end
 
     def tag
@@ -81,19 +81,19 @@ class ROV
     end
     
     def select_last
-      self.selection = elem_size - 1
+      self.selection = children_size - 1
     end
 
     def at_last_child?
-      selection == elem_size - 1
+      selection == children_size - 1
     end
 
     def at_first_child?
       selection == 0
     end
 
-    def elem_size
-      @elem_size ||= case obj
+    def children_size
+      @children_size ||= case obj
       when Enumerable
         obj.size
       else
@@ -140,7 +140,7 @@ class ROV
       return if selection.nil?
 
       raise "Selection must be positive" unless selection >= 0
-      raise "Selection is out of bounds" unless selection < elem_size
+      raise "Selection is out of bounds" unless selection < children_size
 
       elem_at(selection)
     end
@@ -180,7 +180,7 @@ class ROV
     end
 
     def dig_all
-      elem_size.times do |i|
+      children_size.times do |i|
         next unless children_ctx[i].nil?
         next unless child_openable?(i)
 
@@ -193,7 +193,7 @@ class ROV
     end
 
     def close_children
-      elem_size.times { |i| children_ctx[i] = nil }
+      children_size.times { |i| children_ctx[i] = nil }
     end
 
     #
@@ -208,7 +208,7 @@ class ROV
 
         is_active_line = self == active_ctx && selection == index
         active_pos_marker = is_active_line ? '>' : ' '
-        nesting_symbol = index == elem_size - 1 ? '└' : '├'
+        nesting_symbol = index == children_size - 1 ? '└' : '├'
 
         tree_more_symbol = child_openable?(index) ? '+ ': ' '
 
@@ -222,7 +222,7 @@ class ROV
         LINE
 
         unless child_ctx.nil?
-          tree_guide = index == elem_size - 1 ? ' ' : '¦'
+          tree_guide = index == children_size - 1 ? ' ' : '¦'
           out += child_ctx.pretty_print(active_ctx, indent + " #{tree_guide}")
         end
       end
@@ -256,7 +256,7 @@ class ROV
   end
 
   def loop
-    return unless @root_ctx.elem_size > 0
+    return unless @root_ctx.children_size > 0
 
     while @is_running
       print_root
