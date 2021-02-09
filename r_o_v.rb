@@ -188,11 +188,11 @@ class ROV
       end
     end
 
-    def undig
+    def close_child
       children_ctx[selection] = nil
     end
 
-    def undig_all
+    def close_children
       elem_size.times { |i| children_ctx[i] = nil }
     end
 
@@ -298,7 +298,7 @@ class ROV
   end
 
   def close_child
-    @active_ctx.undig
+    @active_ctx.close_child
   end
 
   def step_up
@@ -353,7 +353,7 @@ class ROV
 
   def open_tree_level_until(ctx, n)
     if n == 0
-      ctx.undig_all
+      ctx.close_children
       return
     end
 
