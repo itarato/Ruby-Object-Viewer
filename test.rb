@@ -21,7 +21,7 @@ class Company
     }
     @empty_hash = {}
     @empty_array = []
-    @some_end = { a: User.new, c: Nothing.new }
+    @some_end = { a: User.new, c: Nothing.new, (Nothing.new) => [1, 2] }
   end
 end
 

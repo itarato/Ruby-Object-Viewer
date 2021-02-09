@@ -45,6 +45,19 @@ class ROV
         `tput cols`.to_i
       end
 
+      # def truncate(s, lim)
+      #   s.size > lim ? s[0..lim] + "…" : s
+      # end
+
+      def simple_type?(o)
+        case o
+        when String, Numeric, Symbol, Regexp, Range, TrueClass, FalseClass, NilClass
+          true
+        else
+          false
+        end
+      end
+
       private
 
       def escape(s, color_code)
@@ -156,7 +169,13 @@ class ROV
     def active_child_var_name
       case obj
       when Hash
-        "[#{obj.keys[selection].inspect.gsub('"', '\'')}]"
+        key = obj.keys[selection]
+
+        if Util.simple_type?(key)
+          "[#{key.inspect.gsub('"', '\'')}]"
+        else
+          ".values[#{selection}]"
+        end
       when Enumerable
         "[#{selection}]"
       else
@@ -380,7 +399,7 @@ class ROV
   def active_var_path
     current_ctx = active_ctx
     path = []
-    until current_ctx.nil?
+    while current_ctx
       path.unshift(current_ctx.active_child_var_name)
       current_ctx = current_ctx.parent_ctx
     end
