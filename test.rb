@@ -1,30 +1,39 @@
 require_relative 'r_o_v'
+require 'set'
 
-class User
+class Organism
+  class BetaMarker; end
+  class AlphaMarker; end
+
+  class CellState
+    def initialize
+      @states = %w(replication chrom-segregation cytokinesis)
+      @active_state_idx = 3
+    end
+  end
+
+  class CellType
+    def initialize
+      @markers = { BetaMarker.new => [1, 2], AlphaMarker.new => [2, 3] }
+      @comps = Set.new(['globular', 'glycolipid', 'carbohydrate'])
+    end
+  end
+
+  class Cell
+    def initialize
+      @type = CellType.new
+      @proteins = { No2: 12, CoBRo: 32, FhZ: 2 }
+      @state = CellState.new
+      @surroinding = [100.times.to_a]
+    end
+  end
+
   def initialize
-    @uservar1 = 1
-    @uservar2 = 4.times.to_a
+    @cells = [
+      Cell.new,
+      Cell.new
+    ]
   end
 end
 
-class Nothing; end
-
-class Company
-  def initialize
-    @nothing = Nothing.new
-    @users = {
-      john: User.new,
-    }
-    @heads = {
-      "foo" => 'bar',
-      "bax" => 'xe',
-    }
-    @empty_hash = {}
-    @empty_array = []
-    @some_end = { a: User.new, c: Nothing.new, (Nothing.new) => [1, 2] }
-  end
-end
-
-c = Company.new
-
-ROV[c]
+ROV[Organism.new]
