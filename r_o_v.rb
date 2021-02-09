@@ -51,10 +51,8 @@ class ROV
 
       def simple_type?(o)
         case o
-        when String, Numeric, Symbol, Regexp, Range, TrueClass, FalseClass, NilClass
-          true
-        else
-          false
+        when String, Numeric, Symbol, TrueClass, FalseClass, NilClass then true
+        else false
         end
       end
 
