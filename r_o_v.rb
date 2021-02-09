@@ -1,18 +1,53 @@
 class ROV
   class Util
     class << self
-      def escape(s, color_code); "\e[#{color_code}m#{s}\e[0m"; end
-      def red(s); escape(s, 91); end
-      def green(s); escape(s, 92); end
-      def yellow(s); escape(s, 93); end
-      def blue(s); escape(s, 94); end
-      def magenta(s); escape(s, 95); end
-      def cyan(s); escape(s, 96); end
-      def bold(s); escape(s, 1); end
-      def dim(s); escape(s, 22); end
-      def invert(s); escape(s, 7); end
-      def console_lines; `tput lines`.to_i; end
-      def console_cols; `tput cols`.to_i; end
+      def escape(s, color_code)
+        "\e[#{color_code}m#{s}\e[0m"
+      end
+
+      def red(s)
+        escape(s, 91)
+      end
+
+      def green(s)
+        escape(s, 92)
+      end
+
+      def yellow(s)
+        escape(s, 93)
+      end
+
+      def blue(s)
+        escape(s, 94)
+      end
+
+      def magenta(s)
+        escape(s, 95)
+      end
+
+      def cyan(s)
+        escape(s, 96)
+      end
+
+      def bold(s)
+        escape(s, 1)
+      end
+
+      def dim(s)
+        escape(s, 22)
+      end
+
+      def invert(s)
+        escape(s, 7)
+      end
+
+      def console_lines
+        `tput lines`.to_i
+      end
+
+      def console_cols
+        `tput cols`.to_i
+      end
     end
   end
 
@@ -29,39 +64,52 @@ class ROV
 
     def select_next
       return unless elem_size > 0
-      @selection = (@selection + 1) % elem_size
+      self.selection = (selection + 1) % elem_size
     end
 
     def select_prev
       return unless elem_size > 0
-      @selection = (@selection - 1) % elem_size
+      self.selection = (selection - 1) % elem_size
     end
 
+    def tag
+      obj.class.name
+    end
+    
+    def select_first
+      self.selection = 0
+    end
+    
+    def select_last
+      self.selection = elem_size - 1
+    end
 
-    def tag; @obj.class.name; end
-    def select_first; @selection = 0; end
-    def select_last; @selection = elem_size - 1; end
-    def at_last_child?; @selection == elem_size - 1; end
-    def at_first_child?; @selection == 0; end
+    def at_last_child?
+      selection == elem_size - 1
+    end
+
+    def at_first_child?
+      selection == 0
+    end
 
     def elem_size
-      @elem_size ||= case @obj
+      @elem_size ||= case obj
       when Enumerable
-        @obj.size
+        obj.size
       else
         # TODO Maybe this can coexist with enumerable (eg sg that fakes enumarable).
-        @obj.instance_variables.size
+        obj.instance_variables.size
       end
     end
 
     def elem_names
-      case @obj
+      case obj
       when Hash
-        @obj.keys
+        obj.keys
       when Enumerable
-        @obj.size.times.to_a
+        obj.size.times.to_a
       else
-        @obj.instance_variables
+        obj.instance_variables
       end
     end
 
@@ -78,37 +126,39 @@ class ROV
     end
 
     def elem_at(index)
-      case @obj
+      case obj
       when Hash
-        @obj.values[index]
+        obj.values[index]
       when Enumerable
-        @obj.to_a[index]
+        obj.to_a[index]
       else
-        @obj.instance_variable_get(@obj.instance_variables[index])
+        obj.instance_variable_get(obj.instance_variables[index])
       end
     end
 
     def selected_elem
-      return if @selection.nil?
+      return if selection.nil?
 
-      raise "Selection must be positive" unless @selection >= 0
-      raise "Selection is out of bounds" unless @selection < elem_size
+      raise "Selection must be positive" unless selection >= 0
+      raise "Selection is out of bounds" unless selection < elem_size
 
-      elem_at(@selection)
+      elem_at(selection)
     end
 
     def selected_elem_copyable_name
-      case @obj
+      case obj
       when Hash
-        "[#{@obj.keys[@selection].inspect.gsub('"', '\'')}]"
+        "[#{obj.keys[selection].inspect.gsub('"', '\'')}]"
       when Enumerable
-        "[#{@selection}]"
+        "[#{selection}]"
       else
-        ".#{@obj.instance_variables[@selection][1..-1]}"
+        ".#{obj.instance_variables[selection][1..-1]}"
       end
     end
 
-    def already_digged?; !@children_ctx[@selection].nil?; end
+    def already_digged?
+      !children_ctx[selection].nil?
+    end
 
     def can_dig_at?(index)
       elem = elem_at(index)
@@ -120,26 +170,30 @@ class ROV
       end
     end
 
-    def can_dig?; can_dig_at?(@selection); end
+    def can_dig?
+      can_dig_at?(selection)
+    end
 
     def dig
       raise "Child is not diggable" unless can_dig?
-      @children_ctx[@selection] ||= Ctx.new(selected_elem, self)
+      children_ctx[selection] ||= Ctx.new(selected_elem, self)
     end
 
     def dig_all
       elem_size.times do |i|
-        next unless @children_ctx[i].nil?
+        next unless children_ctx[i].nil?
         next unless can_dig_at?(i)
 
-        @children_ctx[i] = Ctx.new(elem_at(i), self)
+        children_ctx[i] = Ctx.new(elem_at(i), self)
       end
     end
 
-    def undig; @children_ctx[@selection] = nil; end
+    def undig
+      children_ctx[selection] = nil
+    end
 
     def undig_all
-      elem_size.times { |i| @children_ctx[i] = nil }
+      elem_size.times { |i| children_ctx[i] = nil }
     end
 
     #
@@ -148,11 +202,11 @@ class ROV
     def pretty_print(active_ctx, indent = '  ')
       out = []
 
-      elem_names.zip(@children_ctx).each_with_index do |(elem_name, child_ctx), index|
+      elem_names.zip(children_ctx).each_with_index do |(elem_name, child_ctx), index|
         value_suffix = can_dig_at?(index) ? '' : " = #{Util.cyan(elem_at(index).to_s)}"
         tag_suffix = " (#{Util.magenta(elem_at(index).class.name)})#{value_suffix}"
 
-        is_active_line = self == active_ctx && @selection == index
+        is_active_line = self == active_ctx && selection == index
         active_pos_marker = is_active_line ? '>' : ' '
         nesting_symbol = index == elem_size - 1 ? '└' : '├'
 
@@ -175,6 +229,19 @@ class ROV
 
       out
     end
+
+    private
+
+    def children_ctx=
+      raise
+    end
+
+    def parent_ctx=
+      raise
+    end
+
+    attr_accessor :obj
+    attr_accessor :selection
   end
 
   class << self
@@ -197,21 +264,13 @@ class ROV
       cmd = read_command
 
       case cmd
-      when 'q'
-        @is_running = false
-      when 'w'
-        step_up
-      when 's'
-        step_down
-      when 'a'
-        @active_ctx = @active_ctx.parent_ctx unless @active_ctx.parent_ctx.nil?
-      when 'd'
-        @active_ctx = @active_ctx.dig if @active_ctx.can_dig?
-      when 'h'
-        @active_ctx = @root_ctx
-        @active_ctx.select_first
-      when 'e'
-        @active_ctx.undig
+      when 'q' then stop_loop
+      when 'w' then step_up
+      when 's' then step_down
+      when 'a' then step_parent
+      when 'd' then step_child
+      when 'h' then step_home
+      when 'e' then close_child
       when '0'..'9' then open_tree_level(cmd.to_i)
       end
     end
@@ -220,6 +279,27 @@ class ROV
   end
 
   private
+
+  def stop_loop
+    @is_running = false
+  end
+
+  def step_parent
+    @active_ctx = @active_ctx.parent_ctx unless @active_ctx.parent_ctx.nil?
+  end
+
+  def step_child
+    @active_ctx = @active_ctx.dig if @active_ctx.can_dig?
+  end
+
+  def step_home
+    @active_ctx = @root_ctx
+    @active_ctx.select_first
+  end
+
+  def close_child
+    @active_ctx.undig
+  end
 
   def step_up
     if @active_ctx.at_first_child?
