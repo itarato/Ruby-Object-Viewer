@@ -261,7 +261,7 @@ class ROV
     while @is_running
       print_root
 
-      cmd = read_command
+      cmd = read_char
 
       case cmd
       when 'q' then stop_loop
@@ -379,29 +379,28 @@ class ROV
   def print_root
     clear_terminal
 
-    lines = [Util.magenta(@root_ctx.tag), false]
+    lines = [[Util.magenta(@root_ctx.tag) + ":", false]]
     lines += @root_ctx.pretty_print(@active_ctx)
 
     active_line_index = lines.index { |_, is_active| is_active }
 
     puts lines[presentable_line_range(active_line_index, lines.size)].map { |the_string, _| the_string }.join("\n")
 
-    puts ''
-    puts "Copy[ _#{Util.green(active_path)} ]"
+    puts "\n📋 _#{Util.green(active_path)}"
   end
 
-  def presentable_line_range(active_line_index, len)
+  def presentable_line_range(mid_index, len)
     padding = (Util.console_lines - 4) / 2
 
-    if active_line_index <= padding
+    if mid_index <= padding
       from = 0
       to = [padding * 2 + 1, len - 1].min
-    elsif active_line_index + padding >= len
+    elsif mid_index + padding >= len
       to = len - 1
       from = [0, to - 1 - 2 * padding].max
     else
-      from = [0, active_line_index - padding - 1].max
-      to = [active_line_index + padding, len].min
+      from = [0, mid_index - padding - 1].max
+      to = [mid_index + padding, len].min
     end
 
     from..to
@@ -411,10 +410,10 @@ class ROV
     print `clear`
   end
 
-  def read_command
-    system('stty raw -echo') #=> Raw mode, no echo
+  def read_char
+    system('stty raw -echo')
     char = STDIN.getc
-    system('stty -raw echo') #=> Reset terminal mode
+    system('stty -raw echo')
     char
   end
 end
