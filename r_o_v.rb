@@ -103,7 +103,7 @@ class ROV
     end
 
     def children_names
-      case obj
+      @children_names ||= case obj
       when Hash
         obj.keys
       when Enumerable
@@ -114,15 +114,17 @@ class ROV
     end
 
     def current_level
-      level = 0
+      @current_level ||= begin
+        level = 0
 
-      ctx = self
-      while ctx.parent_ctx
-        ctx = ctx.parent_ctx
-        level += 1
+        ctx = self
+        while ctx.parent_ctx
+          ctx = ctx.parent_ctx
+          level += 1
+        end
+
+        level
       end
-
-      level
     end
 
     def child_at(index)
@@ -197,7 +199,7 @@ class ROV
     end
 
     #
-    # @return [String, Boolean]
+    # @return [String, Boolean] String of
     #
     def pretty_print(active_ctx, indent = '  ')
       out = []
