@@ -203,7 +203,7 @@ class ROV
     end
 
     #
-    # @return [String, Boolean] String of
+    # @return [String, Boolean] = [Output, Is-cursor-line?]
     #
     def pretty_print(active_ctx, indent = '  ')
       out = []
@@ -215,7 +215,6 @@ class ROV
         is_active_line = self == active_ctx && selection == index
         active_pos_marker = is_active_line ? '>' : ' '
         nesting_symbol = index == children_size - 1 ? '└' : '├'
-
         tree_more_symbol = child_openable?(index) ? '+ ': ' '
 
         out << [<<~LINE.lines(chomp: true).join, is_active_line]
@@ -227,7 +226,7 @@ class ROV
           #{tag_suffix}
         LINE
 
-        unless child_ctx.nil?
+        if child_ctx
           tree_guide = index == children_size - 1 ? ' ' : '¦'
           out += child_ctx.pretty_print(active_ctx, indent + " #{tree_guide}")
         end
