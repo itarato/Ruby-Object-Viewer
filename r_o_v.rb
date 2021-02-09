@@ -102,6 +102,10 @@ class ROV
       end
     end
 
+    def has_children?
+      children_size > 0
+    end
+
     def children_names
       @children_names ||= case obj
       when Hash
@@ -258,14 +262,12 @@ class ROV
   end
 
   def loop
-    return unless root_ctx.children_size > 0
+    return unless root_ctx.has_children?
 
     while @is_running
       print_root
 
-      cmd = read_char
-
-      case cmd
+      case (cmd = read_char)
       when 'q' then stop_loop
       when 'w' then step_up
       when 's' then step_down
