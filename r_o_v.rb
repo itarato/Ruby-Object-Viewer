@@ -44,6 +44,10 @@ class ROV
       @selection = (@selection - 1) % elem_size
     end
 
+    def select_first
+      @selection = 0
+    end
+
     def select_last
       @selection = elem_size - 1
     end
@@ -195,7 +199,7 @@ class ROV
       when 'w'
         step_up
       when 's'
-        @active_ctx.select_next
+        step_down
       when 'a'
         @active_ctx = @active_ctx.parent_ctx unless @active_ctx.parent_ctx.nil?
       when 'd'
@@ -216,6 +220,13 @@ class ROV
     if @active_ctx.at_first_child?
       if @active_ctx.parent_ctx
         @active_ctx = @active_ctx.parent_ctx
+      else
+        @active_ctx.select_last
+
+        while @active_ctx.already_digged?
+          @active_ctx = @active_ctx.dig
+          @active_ctx.select_last
+        end
       end
       return
     end
@@ -226,6 +237,25 @@ class ROV
       @active_ctx = @active_ctx.dig
       @active_ctx.select_last
     end
+  end
+
+  def step_down
+    if @active_ctx.already_digged?
+      @active_ctx = @active_ctx.dig
+      @active_ctx.select_first
+      return
+    end
+
+    unless @active_ctx.at_last_child?
+      @active_ctx.select_next
+      return
+    end
+
+    while @active_ctx.at_last_child? && @active_ctx.parent_ctx
+      @active_ctx = @active_ctx.parent_ctx
+    end
+
+    @active_ctx.select_next
   end
 
   def active_path

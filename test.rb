@@ -21,6 +21,7 @@ class Company
     }
     @empty_hash = {}
     @empty_array = []
+    @some_end = { a: User.new, c: Nothing.new }
   end
 end
 
