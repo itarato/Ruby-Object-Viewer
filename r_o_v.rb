@@ -44,6 +44,18 @@ class ROV
       @selection = (@selection - 1) % elem_size
     end
 
+    def select_last
+      @selection = elem_size - 1
+    end
+
+    def at_last_child?
+      @selection == elem_size - 1
+    end
+
+    def at_first_child?
+      @selection == 0
+    end
+
     def elem_size
       @elem_size ||= case @obj
       when Enumerable
@@ -94,6 +106,10 @@ class ROV
       else
         ".#{@obj.instance_variables[@selection][1..-1]}"
       end
+    end
+
+    def already_digged?
+      !@children_ctx[@selection].nil?
     end
 
     def can_dig_at?(index)
@@ -177,7 +193,7 @@ class ROV
       when 'q'
         @is_running = false
       when 'w'
-        @active_ctx.select_prev
+        step_up
       when 's'
         @active_ctx.select_next
       when 'a'
@@ -195,6 +211,22 @@ class ROV
   end
 
   private
+
+  def step_up
+    if @active_ctx.at_first_child?
+      if @active_ctx.parent_ctx
+        @active_ctx = @active_ctx.parent_ctx
+      end
+      return
+    end
+
+    @active_ctx.select_prev
+    
+    while @active_ctx.already_digged?
+      @active_ctx = @active_ctx.dig
+      @active_ctx.select_last
+    end
+  end
 
   def active_path
     current_ctx = @active_ctx
