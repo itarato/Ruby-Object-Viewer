@@ -1,10 +1,6 @@
 class ROV
   class Util
     class << self
-      def escape(s, color_code)
-        "\e[#{color_code}m#{s}\e[0m"
-      end
-
       def red(s)
         escape(s, 91)
       end
@@ -47,6 +43,12 @@ class ROV
 
       def console_cols
         `tput cols`.to_i
+      end
+
+      private
+
+      def escape(s, color_code)
+        "\e[#{color_code}m#{s}\e[0m"
       end
     end
   end
