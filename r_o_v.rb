@@ -190,7 +190,7 @@ class ROV
       end
     end
 
-    def close_child
+    def close_active_child
       children_ctx[selection] = nil
     end
 
@@ -272,7 +272,7 @@ class ROV
       when 'a' then step_parent
       when 'd' then step_child
       when 'h' then step_home
-      when 'e' then close_child
+      when 'e' then close_active_child
       when '0'..'9' then open_tree_level(cmd.to_i)
       end
     end
@@ -282,72 +282,79 @@ class ROV
 
   private
 
+  attr_reader :root_ctx
+  attr_accessor :active_ctx
+
+  def root_ctx=
+    raise
+  end
+
   def stop_loop
     @is_running = false
   end
 
   def step_parent
-    @active_ctx = @active_ctx.parent_ctx unless @active_ctx.parent_ctx.nil?
+    self.active_ctx = active_ctx.parent_ctx unless active_ctx.parent_ctx.nil?
   end
 
   def step_child
-    @active_ctx = @active_ctx.open_active_child if @active_ctx.active_child_openable?
+    self.active_ctx = active_ctx.open_active_child if active_ctx.active_child_openable?
   end
 
   def step_home
-    @active_ctx = @root_ctx
-    @active_ctx.select_first
+    self.active_ctx = @root_ctx
+    active_ctx.select_first
   end
 
-  def close_child
-    @active_ctx.close_child
+  def close_active_child
+    active_ctx.close_active_child
   end
 
   def step_up
-    if @active_ctx.at_first_child?
-      if @active_ctx.parent_ctx
-        @active_ctx = @active_ctx.parent_ctx
+    if active_ctx.at_first_child?
+      if active_ctx.parent_ctx
+        self.active_ctx = active_ctx.parent_ctx
       else
-        @active_ctx.select_last
+        active_ctx.select_last
 
-        while @active_ctx.active_child_open?
-          @active_ctx = @active_ctx.open_active_child
-          @active_ctx.select_last
+        while active_ctx.active_child_open?
+          self.active_ctx = active_ctx.open_active_child
+          active_ctx.select_last
         end
       end
       return
     end
 
-    @active_ctx.select_prev
+    active_ctx.select_prev
     
-    while @active_ctx.active_child_open?
-      @active_ctx = @active_ctx.open_active_child
-      @active_ctx.select_last
+    while active_ctx.active_child_open?
+      self.active_ctx = active_ctx.open_active_child
+      active_ctx.select_last
     end
   end
 
   def step_down
-    if @active_ctx.active_child_open?
-      @active_ctx = @active_ctx.open_active_child
-      @active_ctx.select_first
+    if active_ctx.active_child_open?
+      self.active_ctx = active_ctx.open_active_child
+      active_ctx.select_first
       return
     end
 
-    unless @active_ctx.at_last_child?
-      @active_ctx.select_next
+    unless active_ctx.at_last_child?
+      active_ctx.select_next
       return
     end
 
-    while @active_ctx.at_last_child? && @active_ctx.parent_ctx
-      @active_ctx = @active_ctx.parent_ctx
+    while active_ctx.at_last_child? && active_ctx.parent_ctx
+      self.active_ctx = active_ctx.parent_ctx
     end
 
-    @active_ctx.select_next
+    active_ctx.select_next
   end
 
   def open_tree_level(n)
-    while n < @active_ctx.current_level
-      @active_ctx = @active_ctx.parent_ctx
+    while n < active_ctx.current_level
+      self.active_ctx = active_ctx.parent_ctx
     end
 
     open_tree_level_until(@root_ctx, n)
@@ -368,7 +375,7 @@ class ROV
   end
 
   def active_var_path
-    current_ctx = @active_ctx
+    current_ctx = active_ctx
     path = []
     until current_ctx.nil?
       path.unshift(current_ctx.active_child_var_name)
@@ -382,7 +389,7 @@ class ROV
     clear_terminal
 
     lines = [[Util.magenta(@root_ctx.tag) + ":", false]]
-    lines += @root_ctx.pretty_print(@active_ctx)
+    lines += @root_ctx.pretty_print(active_ctx)
     active_line_index = lines.index { |_, is_active| is_active }
 
     puts lines[presentable_line_range(active_line_index, lines.size)].map { |the_string, _| the_string }.join("\n")
