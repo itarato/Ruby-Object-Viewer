@@ -258,7 +258,7 @@ class ROV
   end
 
   def loop
-    return unless @root_ctx.children_size > 0
+    return unless root_ctx.children_size > 0
 
     while @is_running
       print_root
@@ -302,7 +302,7 @@ class ROV
   end
 
   def step_home
-    self.active_ctx = @root_ctx
+    self.active_ctx = root_ctx
     active_ctx.select_first
   end
 
@@ -357,7 +357,7 @@ class ROV
       self.active_ctx = active_ctx.parent_ctx
     end
 
-    open_tree_level_until(@root_ctx, n)
+    open_tree_level_until(root_ctx, n)
   end
 
   def open_tree_level_until(ctx, n)
@@ -388,8 +388,8 @@ class ROV
   def print_root
     clear_terminal
 
-    lines = [[Util.magenta(@root_ctx.tag) + ":", false]]
-    lines += @root_ctx.pretty_print(active_ctx)
+    lines = [[Util.magenta(root_ctx.tag) + ":", false]]
+    lines += root_ctx.pretty_print(active_ctx)
     active_line_index = lines.index { |_, is_active| is_active }
 
     puts lines[presentable_line_range(active_line_index, lines.size)].map { |the_string, _| the_string }.join("\n")
