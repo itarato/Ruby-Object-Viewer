@@ -149,7 +149,12 @@ class ROV
     end
 
     def dig_all
-      elem_size.times { |i| @children_ctx[i] = Ctx.new(elem_at(i), self) if can_dig_at?(i) }
+      elem_size.times do |i|
+        next unless @children_ctx[i].nil?
+        next unless can_dig_at?(i)
+
+        @children_ctx[i] = Ctx.new(elem_at(i), self)
+      end
     end
 
     def undig
