@@ -136,7 +136,7 @@ class ROV
       end
     end
 
-    def active_elem
+    def active_child
       return if selection.nil?
 
       raise "Selection must be positive" unless selection >= 0
@@ -145,7 +145,7 @@ class ROV
       child_at(selection)
     end
 
-    def active_elem_var_name
+    def active_child_var_name
       case obj
       when Hash
         "[#{obj.keys[selection].inspect.gsub('"', '\'')}]"
@@ -174,12 +174,12 @@ class ROV
       child_openable?(selection)
     end
 
-    def dig
-      raise "Child is not diggable" unless active_child_openable?
-      children_ctx[selection] ||= Ctx.new(active_elem, self)
+    def open_active_child
+      raise "Child is not openable" unless active_child_openable?
+      children_ctx[selection] ||= Ctx.new(active_child, self)
     end
 
-    def dig_all
+    def open_children
       children_size.times do |i|
         next unless children_ctx[i].nil?
         next unless child_openable?(i)
@@ -289,7 +289,7 @@ class ROV
   end
 
   def step_child
-    @active_ctx = @active_ctx.dig if @active_ctx.active_child_openable?
+    @active_ctx = @active_ctx.open_active_child if @active_ctx.active_child_openable?
   end
 
   def step_home
@@ -309,7 +309,7 @@ class ROV
         @active_ctx.select_last
 
         while @active_ctx.active_child_open?
-          @active_ctx = @active_ctx.dig
+          @active_ctx = @active_ctx.open_active_child
           @active_ctx.select_last
         end
       end
@@ -319,14 +319,14 @@ class ROV
     @active_ctx.select_prev
     
     while @active_ctx.active_child_open?
-      @active_ctx = @active_ctx.dig
+      @active_ctx = @active_ctx.open_active_child
       @active_ctx.select_last
     end
   end
 
   def step_down
     if @active_ctx.active_child_open?
-      @active_ctx = @active_ctx.dig
+      @active_ctx = @active_ctx.open_active_child
       @active_ctx.select_first
       return
     end
@@ -357,7 +357,7 @@ class ROV
       return
     end
 
-    ctx.dig_all
+    ctx.open_children
     ctx.children_ctx.each do |child_ctx|
       next unless child_ctx
 
@@ -369,7 +369,7 @@ class ROV
     current_ctx = @active_ctx
     path = []
     until current_ctx.nil?
-      path.unshift(current_ctx.active_elem_var_name)
+      path.unshift(current_ctx.active_child_var_name)
       current_ctx = current_ctx.parent_ctx
     end
 
