@@ -102,7 +102,7 @@ class ROV
       end
     end
 
-    def elem_names
+    def children_names
       case obj
       when Hash
         obj.keys
@@ -125,7 +125,7 @@ class ROV
       level
     end
 
-    def elem_at(index)
+    def child_at(index)
       case obj
       when Hash
         obj.values[index]
@@ -142,7 +142,7 @@ class ROV
       raise "Selection must be positive" unless selection >= 0
       raise "Selection is out of bounds" unless selection < children_size
 
-      elem_at(selection)
+      child_at(selection)
     end
 
     def active_elem_var_name
@@ -161,7 +161,7 @@ class ROV
     end
 
     def child_openable?(index)
-      elem = elem_at(index)
+      elem = child_at(index)
       case elem
       when Enumerable
         elem.to_a.size > 0
@@ -184,7 +184,7 @@ class ROV
         next unless children_ctx[i].nil?
         next unless child_openable?(i)
 
-        children_ctx[i] = Ctx.new(elem_at(i), self)
+        children_ctx[i] = Ctx.new(child_at(i), self)
       end
     end
 
@@ -202,9 +202,9 @@ class ROV
     def pretty_print(active_ctx, indent = '  ')
       out = []
 
-      elem_names.zip(children_ctx).each_with_index do |(elem_name, child_ctx), index|
-        value_suffix = child_openable?(index) ? '' : " = #{Util.cyan(elem_at(index).to_s)}"
-        tag_suffix = " (#{Util.magenta(elem_at(index).class.name)})#{value_suffix}"
+      children_names.zip(children_ctx).each_with_index do |(elem_name, child_ctx), index|
+        value_suffix = child_openable?(index) ? '' : " = #{Util.cyan(child_at(index).to_s)}"
+        tag_suffix = " (#{Util.magenta(child_at(index).class.name)})#{value_suffix}"
 
         is_active_line = self == active_ctx && selection == index
         active_pos_marker = is_active_line ? '>' : ' '
