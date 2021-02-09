@@ -136,7 +136,7 @@ class ROV
       end
     end
 
-    def selected_elem
+    def active_elem
       return if selection.nil?
 
       raise "Selection must be positive" unless selection >= 0
@@ -145,7 +145,7 @@ class ROV
       elem_at(selection)
     end
 
-    def selected_elem_copyable_name
+    def active_elem_var_name
       case obj
       when Hash
         "[#{obj.keys[selection].inspect.gsub('"', '\'')}]"
@@ -176,7 +176,7 @@ class ROV
 
     def dig
       raise "Child is not diggable" unless can_dig?
-      children_ctx[selection] ||= Ctx.new(selected_elem, self)
+      children_ctx[selection] ||= Ctx.new(active_elem, self)
     end
 
     def dig_all
@@ -275,7 +275,7 @@ class ROV
       end
     end
 
-    active_path
+    active_var_path
   end
 
   private
@@ -365,11 +365,11 @@ class ROV
     end
   end
 
-  def active_path
+  def active_var_path
     current_ctx = @active_ctx
     path = []
     until current_ctx.nil?
-      path.unshift(current_ctx.selected_elem_copyable_name)
+      path.unshift(current_ctx.active_elem_var_name)
       current_ctx = current_ctx.parent_ctx
     end
 
@@ -381,12 +381,10 @@ class ROV
 
     lines = [[Util.magenta(@root_ctx.tag) + ":", false]]
     lines += @root_ctx.pretty_print(@active_ctx)
-
     active_line_index = lines.index { |_, is_active| is_active }
 
     puts lines[presentable_line_range(active_line_index, lines.size)].map { |the_string, _| the_string }.join("\n")
-
-    puts "\n📋 _#{Util.green(active_path)}"
+    puts "\n📋 _#{Util.green(active_var_path)}"
   end
 
   def presentable_line_range(mid_index, len)
