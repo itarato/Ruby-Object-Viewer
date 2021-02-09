@@ -156,11 +156,11 @@ class ROV
       end
     end
 
-    def already_digged?
+    def active_child_open?
       !children_ctx[selection].nil?
     end
 
-    def can_dig_at?(index)
+    def child_openable?(index)
       elem = elem_at(index)
       case elem
       when Enumerable
@@ -170,19 +170,19 @@ class ROV
       end
     end
 
-    def can_dig?
-      can_dig_at?(selection)
+    def active_child_openable?
+      child_openable?(selection)
     end
 
     def dig
-      raise "Child is not diggable" unless can_dig?
+      raise "Child is not diggable" unless active_child_openable?
       children_ctx[selection] ||= Ctx.new(active_elem, self)
     end
 
     def dig_all
       elem_size.times do |i|
         next unless children_ctx[i].nil?
-        next unless can_dig_at?(i)
+        next unless child_openable?(i)
 
         children_ctx[i] = Ctx.new(elem_at(i), self)
       end
@@ -203,14 +203,14 @@ class ROV
       out = []
 
       elem_names.zip(children_ctx).each_with_index do |(elem_name, child_ctx), index|
-        value_suffix = can_dig_at?(index) ? '' : " = #{Util.cyan(elem_at(index).to_s)}"
+        value_suffix = child_openable?(index) ? '' : " = #{Util.cyan(elem_at(index).to_s)}"
         tag_suffix = " (#{Util.magenta(elem_at(index).class.name)})#{value_suffix}"
 
         is_active_line = self == active_ctx && selection == index
         active_pos_marker = is_active_line ? '>' : ' '
         nesting_symbol = index == elem_size - 1 ? '└' : '├'
 
-        tree_more_symbol = can_dig_at?(index) ? '+ ': ' '
+        tree_more_symbol = child_openable?(index) ? '+ ': ' '
 
         out << [<<~LINE.lines(chomp: true).join, is_active_line]
           #{indent}
@@ -289,7 +289,7 @@ class ROV
   end
 
   def step_child
-    @active_ctx = @active_ctx.dig if @active_ctx.can_dig?
+    @active_ctx = @active_ctx.dig if @active_ctx.active_child_openable?
   end
 
   def step_home
@@ -308,7 +308,7 @@ class ROV
       else
         @active_ctx.select_last
 
-        while @active_ctx.already_digged?
+        while @active_ctx.active_child_open?
           @active_ctx = @active_ctx.dig
           @active_ctx.select_last
         end
@@ -318,14 +318,14 @@ class ROV
 
     @active_ctx.select_prev
     
-    while @active_ctx.already_digged?
+    while @active_ctx.active_child_open?
       @active_ctx = @active_ctx.dig
       @active_ctx.select_last
     end
   end
 
   def step_down
-    if @active_ctx.already_digged?
+    if @active_ctx.active_child_open?
       @active_ctx = @active_ctx.dig
       @active_ctx.select_first
       return
