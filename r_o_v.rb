@@ -22,6 +22,7 @@ class ROV
 
   class Ctx
     attr_reader :parent_ctx
+    attr_reader :children_ctx
 
     def initialize(obj, parent_ctx)
       @obj = obj
@@ -81,6 +82,18 @@ class ROV
       end
     end
 
+    def current_level
+      level = 0
+
+      ctx = self
+      while ctx.parent_ctx
+        ctx = ctx.parent_ctx
+        level += 1
+      end
+
+      level
+    end
+
     def elem_at(index)
       case @obj
       when Hash
@@ -135,8 +148,16 @@ class ROV
       @children_ctx[@selection] ||= Ctx.new(selected_elem, self)
     end
 
+    def dig_all
+      elem_size.times { |i| @children_ctx[i] = Ctx.new(elem_at(i), self) if can_dig_at?(i) }
+    end
+
     def undig
       @children_ctx[@selection] = nil
+    end
+
+    def undig_all
+      elem_size.times { |i| @children_ctx[i] = nil }
     end
 
     #
@@ -204,10 +225,12 @@ class ROV
         @active_ctx = @active_ctx.parent_ctx unless @active_ctx.parent_ctx.nil?
       when 'd'
         @active_ctx = @active_ctx.dig if @active_ctx.can_dig?
+      when 'h'
+        @active_ctx = @root_ctx
+        @active_ctx.select_first
       when 'e'
         @active_ctx.undig
-      else
-        puts @obj
+      when '0'..'9' then open_tree_level(cmd.to_i)
       end
     end
 
@@ -256,6 +279,28 @@ class ROV
     end
 
     @active_ctx.select_next
+  end
+
+  def open_tree_level(n)
+    while n < @active_ctx.current_level
+      @active_ctx = @active_ctx.parent_ctx
+    end
+
+    open_tree_level_until(@root_ctx, n)
+  end
+
+  def open_tree_level_until(ctx, n)
+    if n == 0
+      ctx.undig_all
+      return
+    end
+
+    ctx.dig_all
+    ctx.children_ctx.each do |child_ctx|
+      next unless child_ctx
+
+      open_tree_level_until(child_ctx, n - 1)
+    end
   end
 
   def active_path
