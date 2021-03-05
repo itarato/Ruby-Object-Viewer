@@ -124,7 +124,7 @@ class ROV
       when Hash
         obj.keys
       when Enumerable
-        obj.size.times.to_a
+        obj.to_a.size.times.to_a
       else
         obj.instance_variables
       end
