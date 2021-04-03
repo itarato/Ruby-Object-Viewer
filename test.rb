@@ -24,7 +24,7 @@ class Organism
       @type = CellType.new
       @proteins = { No2: 12, CoBRo: 32, FhZ: 2 }
       @state = CellState.new
-      @surroinding = [100.times.to_a]
+      @surrounding = [100.times.to_a]
     end
   end
 

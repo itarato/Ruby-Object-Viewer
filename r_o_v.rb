@@ -1,4 +1,7 @@
 class ROV
+  KEY_BACKSPACE = "\u{7f}"
+  KEY_ENTER = "\u{d}"
+
   class Util
     class << self
       def red(s)
@@ -59,7 +62,7 @@ class ROV
       private
 
       def escape(s, color_code)
-        "\e[#{color_code}m#{s}\e[0m"
+        "\x1B[#{color_code}m#{s}\x1B[0m"
       end
     end
   end
@@ -282,17 +285,19 @@ class ROV
   def loop
     return unless root_ctx.has_children?
 
+    key_reader = KeyReader.new
+
     while @is_running
       print_root
 
-      case (cmd = read_char)
+      case (cmd = key_reader.read_char)
       when 'q' then stop_loop
-      when 'w' then step_up
-      when 's' then step_down
-      when 'a' then step_parent
-      when 'd' then step_child
+      when :up then step_up
+      when :down then step_down
+      when :left then step_parent
+      when :right, KEY_ENTER then step_child
       when 'h' then step_home
-      when 'e' then close_active_child
+      when KEY_BACKSPACE then close_active_child
       when '0'..'9' then open_tree_level(cmd.to_i)
       end
     end
@@ -437,10 +442,74 @@ class ROV
     print `clear`
   end
 
-  def read_char
-    system('stty raw -echo')
-    char = STDIN.getc
-    system('stty -raw echo')
-    char
+  class KeyReader
+    ESCAPE_MAP = {
+      up: [91, 65],
+      down: [91, 66],
+      left: [91, 68],
+      right: [91, 67],
+    }
+  
+    module MatchState
+      class None; end
+      class Prefix; end
+      class Full < Struct.new(:key); end
+    end
+  
+    def initialize
+      @buffer = []
+      @is_buffering = false
+    end
+  
+    def read_char
+      system('stty raw -echo')
+      char = STDIN.getc
+      system('stty -raw echo')
+  
+      if @is_buffering
+        @buffer << char.ord
+  
+        case (match_result = match?)
+        when MatchState::None
+          puts "Failed buffer: #{@buffer}"
+          @buffer = []
+          @is_buffering = false
+          '\0'
+        when MatchState::Prefix
+          read_char
+        when MatchState::Full
+          @buffer = []
+          @is_buffering = false
+          match_result.key
+        else
+          raise "Unknown match state"
+        end
+      elsif char.ord == 27
+        @is_buffering = true
+        @buffer = []
+        read_char
+      else
+        char
+      end
+    end
+  
+    private
+  
+    def match?
+      is_prefix = false
+  
+      buf_len = @buffer.size
+      ESCAPE_MAP.each do |key, seq|
+        if @buffer == seq[..(buf_len - 1)]
+          is_prefix = true
+          if buf_len == seq.size
+            return MatchState::Full.new(key)
+          end
+        end
+      end
+  
+      return MatchState::Prefix.new if is_prefix
+      MatchState::None.new
+    end
   end
 end

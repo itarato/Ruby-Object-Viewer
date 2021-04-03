@@ -18,10 +18,10 @@ pry#> ROV[complex_object]
 ```
 
 Keys:
-- <kbd>w</kbd>: go up
-- <kbd>s</kbd>: go down
-- <kbd>a</kbd>: go to parent
-- <kbd>d</kbd>: open to child
+- <kbd>🠕</kbd>: go up
+- <kbd>🠗</kbd>: go down
+- <kbd>🠔</kbd>: go to parent
+- <kbd>🠖</kbd>: open to child
 - <kbd>e</kbd>: close child
 - <kbd>h</kbd>: go home (first node)
 - <kbd>0</kbd> .. <kbd>9</kbd>: open N levels
