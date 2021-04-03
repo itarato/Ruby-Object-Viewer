@@ -22,7 +22,7 @@ Keys:
 - <kbd>🠗</kbd>: go down
 - <kbd>🠔</kbd>: go to parent
 - <kbd>🠖</kbd>: open to child
-- <kbd>e</kbd>: close child
+- <kbd>backspace</kbd>: close child
 - <kbd>h</kbd>: go home (first node)
 - <kbd>0</kbd> .. <kbd>9</kbd>: open N levels
 - <kbd>q</kbd>: exit
