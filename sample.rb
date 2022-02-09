@@ -4,17 +4,20 @@ require 'set'
 class Organism
   class BetaMarker; end
   class AlphaMarker; end
+  module Foldable; end
 
   class CellState
     def initialize
       @states = %w(replication chrom-segregation cytokinesis)
       @active_state_idx = 3
+      @self_type = CellState
+      @self_iface = Foldable
     end
   end
 
   class CellType
     def initialize
-      @markers = { BetaMarker.new => [1, 2], AlphaMarker.new => [2, 3] }
+      @markers = { BetaMarker.new => [1, 2], AlphaMarker.new => [2, 3], Foldable => nil }
       @comps = Set.new(['globular', 'glycolipid', 'carbohydrate'])
     end
   end
