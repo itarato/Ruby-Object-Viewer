@@ -23,7 +23,29 @@ class ROV
         return s unless s.size > lim # Quick escape to save gsub use.
         return s unless visible_str_len(s) > lim
 
-        s[..lim] + "…"
+        vis_count = 0
+        full_count = nil
+        in_escape = false
+
+
+        s.chars.each_with_index do |c, idx|
+          if in_escape
+            in_escape = false if c == 'm'
+          else
+            if c == "\e"
+              in_escape = true
+            else
+              vis_count += 1
+
+              if vis_count >= lim - 1
+                full_count = idx
+                break
+              end
+            end
+          end
+        end
+
+        s[..full_count] + "\x1B[0m…"
       end
 
       def visible_str_len(str); str.gsub(/\e\[\d+m/, '').size; end
