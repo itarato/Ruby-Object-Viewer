@@ -1,7 +1,6 @@
 # TODO:
 # - close parent should work on the child too (go to parent and then close)
 # - sluggishness on M1 + Rails + pry
-# - get terminal width and truncate string on that (trunc_len = width - current x)
 # - fuzzy search - jump
 
 class ROV
