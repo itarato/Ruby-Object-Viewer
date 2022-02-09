@@ -19,9 +19,14 @@ class ROV
       def console_lines; `tput lines`.to_i; end
       def console_cols; `tput cols`.to_i; end
 
-      # def truncate(s, lim)
-      #   s.size > lim ? s[0..lim] + "…" : s
-      # end
+      def visible_truncate(s, lim)
+        return s unless s.size > lim # Quick escape to save gsub use.
+        return s unless visible_str_len(s) > lim
+
+        s[..lim] + "…"
+      end
+
+      def visible_str_len(str); str.gsub(/\e\[\d+m/, '').size; end
 
       def simple_type?(o)
         case o
@@ -32,9 +37,7 @@ class ROV
 
       private
 
-      def escape(s, color_code)
-        "\x1B[#{color_code}m#{s}\x1B[0m"
-      end
+      def escape(s, color_code); "\x1B[#{color_code}m#{s}\x1B[0m"; end
     end
   end
 
@@ -201,8 +204,6 @@ class ROV
     def pretty_print(active_ctx, indent = '  ')
       out = []
 
-      console_width = Util.console_cols
-
       children_names.zip(children_ctx).each_with_index do |(elem_name, child_ctx), index|
         value_suffix = child_openable?(index) ? '' : " = #{Util.cyan(child_at(index).to_s)}"
         tag_suffix = " (#{Util.magenta(child_at(index).class.name)})#{value_suffix}"
@@ -212,7 +213,7 @@ class ROV
         nesting_symbol = index == children_size - 1 ? '└' : '├'
         tree_more_symbol = child_openable?(index) ? '+ ': ' '
 
-        out << [<<~LINE.lines(chomp: true).join[..console_width], is_active_line]
+        line = <<~LINE.lines(chomp: true).join
           #{indent}
           #{Util.bold(Util.yellow(active_pos_marker))}
           #{nesting_symbol}─
@@ -220,6 +221,8 @@ class ROV
           #{is_active_line ? Util.invert(Util.blue(elem_name)) : Util.blue(elem_name)}
           #{tag_suffix}
         LINE
+
+        out << [line, is_active_line]
 
         if child_ctx
           tree_guide = index == children_size - 1 ? ' ' : '¦'
@@ -385,12 +388,15 @@ class ROV
 
   def print_root
     clear_terminal
+    @terminal_width = Util.console_cols
 
     lines = [[Util.magenta(root_ctx.tag) + ":", false]]
     lines += root_ctx.pretty_print(active_ctx)
     active_line_index = lines.index { |_, is_active| is_active }
 
-    puts lines[presentable_line_range(active_line_index, lines.size)].map { |the_string, _| the_string }.join("\n")
+    puts (lines[presentable_line_range(active_line_index, lines.size)].map do |line, _|
+      Util.visible_truncate(line, @terminal_width)
+    end.join("\n"))
     puts "\n📋 _#{Util.green(active_var_path)}"
   end
 
