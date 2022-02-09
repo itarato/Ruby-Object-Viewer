@@ -1,52 +1,22 @@
-class ROV
-  KEY_BACKSPACE = "\u{7f}"
-  KEY_ENTER = "\u{d}"
+# TODO:
+# - close parent should work on the child too (go to parent and then close)
+# - sluggishness on M1 + Rails + pry
+# - get terminal width and truncate string on that (trunc_len = width - current x)
 
+class ROV
   class Util
     class << self
-      def red(s)
-        escape(s, 91)
-      end
-
-      def green(s)
-        escape(s, 92)
-      end
-
-      def yellow(s)
-        escape(s, 93)
-      end
-
-      def blue(s)
-        escape(s, 94)
-      end
-
-      def magenta(s)
-        escape(s, 95)
-      end
-
-      def cyan(s)
-        escape(s, 96)
-      end
-
-      def bold(s)
-        escape(s, 1)
-      end
-
-      def dim(s)
-        escape(s, 22)
-      end
-
-      def invert(s)
-        escape(s, 7)
-      end
-
-      def console_lines
-        `tput lines`.to_i
-      end
-
-      def console_cols
-        `tput cols`.to_i
-      end
+      def red(s); escape(s, 91); end
+      def green(s); escape(s, 92); end
+      def yellow(s); escape(s, 93); end
+      def blue(s); escape(s, 94); end
+      def magenta(s); escape(s, 95); end
+      def cyan(s); escape(s, 96); end
+      def bold(s); escape(s, 1); end
+      def dim(s); escape(s, 22); end
+      def invert(s); escape(s, 7); end
+      def console_lines; `tput lines`.to_i; end
+      def console_cols; `tput cols`.to_i; end
 
       # def truncate(s, lim)
       #   s.size > lim ? s[0..lim] + "…" : s
@@ -91,11 +61,11 @@ class ROV
     def tag
       obj.class.name
     end
-    
+
     def select_first
       self.selection = 0
     end
-    
+
     def select_last
       self.selection = children_size - 1
     end
@@ -292,12 +262,12 @@ class ROV
 
       case (cmd = key_reader.read_char)
       when 'q' then stop_loop
-      when :up then step_up
-      when :down then step_down
-      when :left then step_parent
-      when :right, KEY_ENTER then step_child
+      when 'w' then step_up
+      when 's' then step_down
+      when 'a' then step_parent
+      when 'd' then step_child
       when 'h' then step_home
-      when KEY_BACKSPACE then close_active_child
+      when 'e' then close_active_child
       when '0'..'9' then open_tree_level(cmd.to_i)
       end
     end
@@ -351,7 +321,7 @@ class ROV
     end
 
     active_ctx.select_prev
-    
+
     while active_ctx.active_child_open?
       self.active_ctx = active_ctx.open_active_child
       active_ctx.select_last
@@ -443,73 +413,11 @@ class ROV
   end
 
   class KeyReader
-    ESCAPE_MAP = {
-      up: [91, 65],
-      down: [91, 66],
-      left: [91, 68],
-      right: [91, 67],
-    }
-  
-    module MatchState
-      class None; end
-      class Prefix; end
-      class Full < Struct.new(:key); end
-    end
-  
-    def initialize
-      @buffer = []
-      @is_buffering = false
-    end
-  
     def read_char
       system('stty raw -echo')
       char = STDIN.getc
       system('stty -raw echo')
-  
-      if @is_buffering
-        @buffer << char.ord
-  
-        case (match_result = match?)
-        when MatchState::None
-          puts "Failed buffer: #{@buffer}"
-          @buffer = []
-          @is_buffering = false
-          '\0'
-        when MatchState::Prefix
-          read_char
-        when MatchState::Full
-          @buffer = []
-          @is_buffering = false
-          match_result.key
-        else
-          raise "Unknown match state"
-        end
-      elsif char.ord == 27
-        @is_buffering = true
-        @buffer = []
-        read_char
-      else
-        char
-      end
-    end
-  
-    private
-  
-    def match?
-      is_prefix = false
-  
-      buf_len = @buffer.size
-      ESCAPE_MAP.each do |key, seq|
-        if @buffer == seq[..(buf_len - 1)]
-          is_prefix = true
-          if buf_len == seq.size
-            return MatchState::Full.new(key)
-          end
-        end
-      end
-  
-      return MatchState::Prefix.new if is_prefix
-      MatchState::None.new
+      char
     end
   end
 end
