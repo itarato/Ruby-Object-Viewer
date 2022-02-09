@@ -2,6 +2,7 @@
 # - close parent should work on the child too (go to parent and then close)
 # - sluggishness on M1 + Rails + pry
 # - get terminal width and truncate string on that (trunc_len = width - current x)
+# - fuzzy search - jump
 
 class ROV
   class Util
@@ -200,6 +201,8 @@ class ROV
     def pretty_print(active_ctx, indent = '  ')
       out = []
 
+      console_width = Util.console_cols
+
       children_names.zip(children_ctx).each_with_index do |(elem_name, child_ctx), index|
         value_suffix = child_openable?(index) ? '' : " = #{Util.cyan(child_at(index).to_s)}"
         tag_suffix = " (#{Util.magenta(child_at(index).class.name)})#{value_suffix}"
@@ -209,7 +212,7 @@ class ROV
         nesting_symbol = index == children_size - 1 ? '└' : '├'
         tree_more_symbol = child_openable?(index) ? '+ ': ' '
 
-        out << [<<~LINE.lines(chomp: true).join, is_active_line]
+        out << [<<~LINE.lines(chomp: true).join[..console_width], is_active_line]
           #{indent}
           #{Util.bold(Util.yellow(active_pos_marker))}
           #{nesting_symbol}─
