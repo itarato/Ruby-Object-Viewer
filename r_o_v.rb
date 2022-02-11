@@ -68,13 +68,15 @@ class ROV
     attr_reader(:parent_ctx)
     attr_reader(:children_ctx)
     attr_reader(:tag)
+    attr_reader(:current_level)
 
-    def initialize(obj, parent_ctx)
+    def initialize(obj, parent_ctx, current_level:)
       @obj = obj
       @parent_ctx = parent_ctx
       @selection = children_size > 0 ? 0 : nil
       @children_ctx = [nil] * children_size
       @tag = obj.class.name
+      @current_level = current_level
     end
 
     def select_next
@@ -120,20 +122,6 @@ class ROV
       when Hash then obj.keys
       when Enumerable then obj.to_a.size.times.to_a
       else obj.instance_variables
-      end
-    end
-
-    def current_level
-      @current_level ||= begin
-        level = 0
-
-        ctx = self
-        while ctx.parent_ctx
-          ctx = ctx.parent_ctx
-          level += 1
-        end
-
-        level
       end
     end
 
@@ -193,8 +181,8 @@ class ROV
     end
 
     def open_active_child
-      raise "Child is not openable" unless active_child_openable?
-      children_ctx[selection] ||= Ctx.new(active_child, self)
+      raise("Child is not openable") unless active_child_openable?
+      children_ctx[selection] ||= Ctx.new(active_child, self, current_level: current_level + 1)
     end
 
     def open_children
@@ -202,7 +190,7 @@ class ROV
         next unless children_ctx[i].nil?
         next unless child_openable?(i)
 
-        children_ctx[i] = Ctx.new(child_at(i), self)
+        children_ctx[i] = Ctx.new(child_at(i), self, current_level: current_level + 1)
       end
     end
 
@@ -270,7 +258,7 @@ class ROV
   end
 
   def initialize(obj)
-    @root_ctx = @active_ctx = Ctx.new(obj, nil)
+    @root_ctx = @active_ctx = Ctx.new(obj, nil, current_level: 0)
     @is_running = true
   end
 
