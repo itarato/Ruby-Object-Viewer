@@ -4,6 +4,7 @@
 # - fuzzy search - jump
 
 # require_relative("debug")
+# require("pry")
 
 class ROV
   class Util
@@ -188,6 +189,7 @@ class ROV
       end
     end
 
+    # TODO: Lets not lose the object, lets have a prop for closed.
     def close_active_child
       children_ctx[selection] = nil
     end
@@ -241,7 +243,11 @@ class ROV
       raise
     end
 
-    attr_accessor :obj
+    def obj=
+      raise
+    end
+
+    attr_reader :obj
     attr_accessor :selection
   end
 
@@ -259,12 +265,10 @@ class ROV
   def loop
     return unless root_ctx.has_children?
 
-    key_reader = KeyReader.new
-
     while @is_running
       print_root
 
-      case (cmd = key_reader.read_char)
+      case (cmd = read_char)
       when 'q' then stop_loop
       when 'w' then step_up
       when 's' then step_down
@@ -419,12 +423,10 @@ class ROV
     print `clear`
   end
 
-  class KeyReader
-    def read_char
-      system('stty', 'raw', '-echo')
-      char = STDIN.getc
-      system('stty', '-raw', 'echo')
-      char
-    end
+  def read_char
+    system('stty', 'raw', '-echo')
+    char = STDIN.getc
+    system('stty', '-raw', 'echo')
+    char
   end
 end
