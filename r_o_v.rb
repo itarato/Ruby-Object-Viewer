@@ -107,7 +107,7 @@ class ROV
 
     def children_size
       @children_size ||= case obj
-      when Enumerable then obj.to_a.size
+      when Enumerable then obj.size
       # TODO Maybe this can coexist with enumerable (eg sg that fakes enumarable).
       else obj.instance_variables.size
       end
@@ -120,27 +120,24 @@ class ROV
     def children_names
       @children_names ||= case obj
       when Hash then obj.keys
-      when Enumerable then obj.to_a.size.times.to_a
+      when Enumerable then children_size.times.to_a
       else obj.instance_variables
       end
     end
 
     def child_at(index)
       case obj
-      when Hash
-        obj.values[index]
-      when Enumerable
-        obj.to_a[index]
-      else
-        obj.instance_variable_get(obj.instance_variables[index])
+      when Hash then obj.values[index]
+      when Enumerable then obj.to_a[index]
+      else obj.instance_variable_get(obj.instance_variables[index])
       end
     end
 
     def active_child
       return if selection.nil?
 
-      raise "Selection must be positive" unless selection >= 0
-      raise "Selection is out of bounds" unless selection < children_size
+      raise("Selection must be positive") unless selection >= 0
+      raise("Selection is out of bounds") unless selection < children_size
 
       child_at(selection)
     end
@@ -167,12 +164,9 @@ class ROV
     end
 
     def child_openable?(index)
-      elem = child_at(index)
-      case elem
-      when Enumerable
-        elem.to_a.size > 0
-      else
-        elem.instance_variables.size > 0
+      case (elem = child_at(index))
+      when Enumerable then elem.to_a.size > 0
+      else elem.instance_variables.size > 0
       end
     end
 
