@@ -3,6 +3,8 @@
 # - sluggishness on M1 + Rails + pry
 # - fuzzy search - jump
 
+# require_relative("debug")
+
 class ROV
   class Util
     class << self
@@ -63,14 +65,16 @@ class ROV
   end
 
   class Ctx
-    attr_reader :parent_ctx
-    attr_reader :children_ctx
+    attr_reader(:parent_ctx)
+    attr_reader(:children_ctx)
+    attr_reader(:tag)
 
     def initialize(obj, parent_ctx)
       @obj = obj
       @parent_ctx = parent_ctx
       @selection = children_size > 0 ? 0 : nil
       @children_ctx = [nil] * children_size
+      @tag = obj.class.name
     end
 
     def select_next
@@ -81,10 +85,6 @@ class ROV
     def select_prev
       return unless children_size > 0
       self.selection = (selection - 1) % children_size
-    end
-
-    def tag
-      obj.class.name
     end
 
     def select_first
@@ -105,11 +105,9 @@ class ROV
 
     def children_size
       @children_size ||= case obj
-      when Enumerable
-        obj.to_a.size
-      else
-        # TODO Maybe this can coexist with enumerable (eg sg that fakes enumarable).
-        obj.instance_variables.size
+      when Enumerable then obj.to_a.size
+      # TODO Maybe this can coexist with enumerable (eg sg that fakes enumarable).
+      else obj.instance_variables.size
       end
     end
 
@@ -119,12 +117,9 @@ class ROV
 
     def children_names
       @children_names ||= case obj
-      when Hash
-        obj.keys
-      when Enumerable
-        obj.to_a.size.times.to_a
-      else
-        obj.instance_variables
+      when Hash then obj.keys
+      when Enumerable then obj.to_a.size.times.to_a
+      else obj.instance_variables
       end
     end
 
