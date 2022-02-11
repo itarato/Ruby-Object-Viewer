@@ -15,8 +15,8 @@ class ROV
       def bold(s); escape(s, 1); end
       def dim(s); escape(s, 22); end
       def invert(s); escape(s, 7); end
-      def console_lines; `tput lines`.to_i; end
-      def console_cols; `tput cols`.to_i; end
+      def console_lines; %x`tput lines`.to_i; end
+      def console_cols; %x`tput cols`.to_i; end
 
       def visible_truncate(s, lim)
         return s unless s.size > lim # Quick escape to save gsub use.
@@ -444,9 +444,9 @@ class ROV
 
   class KeyReader
     def read_char
-      system('stty raw -echo')
+      system('stty', 'raw', '-echo')
       char = STDIN.getc
-      system('stty -raw echo')
+      system('stty', '-raw', 'echo')
       char
     end
   end
