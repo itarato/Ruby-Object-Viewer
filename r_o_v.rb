@@ -260,6 +260,7 @@ class ROV
   def initialize(obj)
     @root_ctx = @active_ctx = Ctx.new(obj, nil, current_level: 0)
     @is_running = true
+    @terminal_width = Util.console_cols
   end
 
   def loop
@@ -390,7 +391,6 @@ class ROV
 
   def print_root
     clear_terminal
-    @terminal_width = Util.console_cols
 
     lines = [[Util.magenta(root_ctx.tag) + ":", false]]
     lines += root_ctx.pretty_print(active_ctx)
