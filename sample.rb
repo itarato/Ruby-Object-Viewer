@@ -35,7 +35,10 @@ class Organism
   def initialize
     @cells = [
       Cell.new,
-      Cell.new
+      Cell.new,
+      {
+        apostosis: [1, nil, {}],
+      }
     ]
   end
 end
