@@ -108,9 +108,11 @@ class ROV
 
     def children_size
       @children_size ||= case obj
-      when Enumerable then obj.size
+      when Enumerable
+        obj.respond_to?(:size) ? obj.size : obj.to_a.size
       # TODO Maybe this can coexist with enumerable (eg sg that fakes enumarable).
-      else obj.instance_variables.size
+      else
+        obj.instance_variables.size
       end
     end
 
