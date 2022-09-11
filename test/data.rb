@@ -1,5 +1,4 @@
-require_relative 'r_o_v'
-require 'set'
+require('set')
 
 class Organism
   class BetaMarker; end
@@ -43,4 +42,4 @@ class Organism
   end
 end
 
-ROV << Organism.new
+organism = Organism.new

@@ -258,13 +258,13 @@ class ROV
     def [](obj)
       ROV.new(obj).loop
     end
-    alias_method(:<<, :[])
   end
 
   def initialize(obj)
     @root_ctx = @active_ctx = Ctx.new(obj, nil, current_level: 0)
     @is_running = true
     @terminal_width = Util.console_cols
+    @variable_name = get_input_presentation
   end
 
   def loop
@@ -285,7 +285,7 @@ class ROV
       end
     end
 
-    active_var_path
+    @variable_name + active_var_path
   end
 
   private
@@ -403,7 +403,7 @@ class ROV
     puts (lines[presentable_line_range(active_line_index, lines.size)].map do |line, _|
       Util.visible_truncate(line, @terminal_width)
     end.join("\n"))
-    puts "\n📋 _#{Util.green(active_var_path)}"
+    puts "\n📋 #{@variable_name}#{Util.green(active_var_path)}"
   end
 
   def presentable_line_range(mid_index, len)
@@ -432,5 +432,22 @@ class ROV
     char = STDIN.getc
     system('stty', '-raw', 'echo')
     char
+  end
+
+  def get_input_presentation
+    rx = /ROV\[(?<varname>.+)\]$/
+
+    if Object.const_defined?("Pry")
+      last_pry_call = Pry.history.to_a.last
+      return rx.match(last_pry_call.rstrip)["varname"]
+    elsif Object.const_defined?("IRB")
+      IRB.CurrentContext.io.save_history
+      last_irb_call = IO.readlines(File.expand_path(IRB.rc_file("_history"))).last
+      return rx.match(last_irb_call.rstrip)["varname"]
+    end
+
+    "_"
+  rescue
+    "-"
   end
 end

@@ -1,7 +1,7 @@
 Ruby Object Viewer (rov)
 ------------------------
 
-![Example](example.png)
+![Example](misc/example.png)
 
 If you ever pry debugged large objects in Ruby on a terminal and got frustrated how hard to inspect large objects - other than printing them out and scrabble the details from pages of inspect-output - this might be for you.
 
