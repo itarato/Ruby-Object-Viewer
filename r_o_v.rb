@@ -282,6 +282,7 @@ class ROV
       when 'h' then step_home
       when 'e' then close_active_child
       when '0'..'9' then open_tree_level(cmd.to_i)
+      when 'i' then idbg_ext_log
       end
     end
 
@@ -380,6 +381,11 @@ class ROV
 
       open_tree_level_until(child_ctx, n - 1)
     end
+  end
+
+  def idbg_ext_log
+    return unless Object.const_defined?("IDbg")
+    IDbg.log("ROV", @variable_name + active_var_path, active_ctx.active_child)
   end
 
   def active_var_path

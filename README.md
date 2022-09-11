@@ -24,9 +24,9 @@ Keys:
           up
    quit   │ ┌─close subtree
     │     ▼ ▼
-    │  ┌─┬─┬─┐
-    └─►│q│w│e│
-       ├─┼─┼─┼ ┬─┐
+    │  ┌─┬─┬─┬   ┌─┐
+    └─►│q│w│e│   │i│◄───IDbg.log
+       ├─┼─┼─┼ ┬─┼─┘
    ┌──►│a│s│d│ │h│◄───home
    │   └─┴─┴─┴ ┴─┘
 go parent ▲ ▲
