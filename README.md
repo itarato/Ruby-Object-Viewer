@@ -10,6 +10,7 @@ This one file tool allows traversing objects bit by bit like a tree with a nice 
 ## Usage
 
 It is one file so you can copy into a large project that doesn't allow live-loading gems (but at least you can gitignore this).
+Tip: use `bash` instead of bloated shells (eg `zsh`) to make it faster (input request from the OS is quicker when a shell has a small footprint).
 
 Once you loaded the file:
 

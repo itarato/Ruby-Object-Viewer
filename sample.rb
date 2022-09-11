@@ -43,4 +43,4 @@ class Organism
   end
 end
 
-ROV[Organism.new]
+ROV << Organism.new

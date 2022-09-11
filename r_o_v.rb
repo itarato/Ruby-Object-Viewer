@@ -1,10 +1,11 @@
+# frozen_string_literal: true
+
 # TODO:
 # - close parent should work on the child too (go to parent and then close)
 # - sluggishness on M1 + Rails + pry
 # - fuzzy search - jump
-
-# require_relative("debug")
-# require("pry")
+# - parallel open (same trail)
+# - memory slabs
 
 class ROV
   class Util
@@ -257,6 +258,7 @@ class ROV
     def [](obj)
       ROV.new(obj).loop
     end
+    alias_method(:<<, :[])
   end
 
   def initialize(obj)
