@@ -21,12 +21,12 @@ pry#> ROV[complex_object]
 Keys:
 
 ```
-          up
-   quit   │ ┌─close subtree
-    │     ▼ ▼
-    │  ┌─┬─┬─┬   ┌─┐
-    └─►│q│w│e│   │i│◄───IDbg.log
-       ├─┼─┼─┼ ┬─┼─┘
+         up ┌─close subtree
+   quit   │ │     ┌─IDbg.log
+    │     ▼ ▼     ▼
+    │  ┌─┬─┬─┬   ┌─┬ ┬─┐
+    └─►│q│w│e│   │i│ │p│◄───Open parallel children
+       ├─┼─┼─┼ ┬─┼─┴ ┴─┘
    ┌──►│a│s│d│ │h│◄───home
    │   └─┴─┴─┴ ┴─┘
 go parent ▲ ▲
