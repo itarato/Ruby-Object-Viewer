@@ -23,6 +23,7 @@ class Organism
 
   class Cell
     def initialize
+      @rand = rand % 100
       @type = CellType.new
       @proteins = { No2: 12, CoBRo: 32, FhZ: 2 }
       @state = CellState.new
@@ -32,6 +33,7 @@ class Organism
   end
 
   def initialize
+    @list = 4.times.map { Cell.new }
     @cells = [
       Cell.new,
       Cell.new,

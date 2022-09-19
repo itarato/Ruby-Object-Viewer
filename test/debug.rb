@@ -1,6 +1,6 @@
 require("syslog")
 
-Syslog.open("webrick", Syslog::LOG_PID, Syslog::LOG_DAEMON | Syslog::LOG_LOCAL3)
+Syslog.open("ROV", Syslog::LOG_PID, Syslog::LOG_DAEMON | Syslog::LOG_LOCAL3)
 Syslog.log(Syslog::LOG_NOTICE, "Ruby ROV Syslog process has started on #{Time.now}")
 
 def log(msg = nil)

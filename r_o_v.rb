@@ -71,6 +71,8 @@ class ROV
     attr_reader(:children_ctx)
     attr_reader(:tag)
     attr_reader(:current_level)
+    attr_reader(:obj)
+    attr_reader(:selection)
 
     def initialize(obj, parent_ctx, current_level:)
       @obj = obj
@@ -129,6 +131,9 @@ class ROV
       end
     end
 
+    #
+    # Actual object children (raw object).
+    #
     def child_at(index)
       case obj
       when Hash then obj.values[index]
@@ -181,6 +186,11 @@ class ROV
     def open_active_child
       raise("Child is not openable") unless active_child_openable?
       children_ctx[selection] ||= Ctx.new(active_child, self, current_level: current_level + 1)
+    end
+
+    def open_nth_child(idx)
+      raise("Child is not openable") unless child_openable?(idx)
+      children_ctx[idx] ||= Ctx.new(child_at(idx), self, current_level: current_level + 1)
     end
 
     def open_children
@@ -236,6 +246,10 @@ class ROV
       out
     end
 
+    def is_list
+      @obj.is_a?(Enumerable)
+    end
+
     private
 
     def children_ctx=
@@ -250,8 +264,7 @@ class ROV
       raise
     end
 
-    attr_reader :obj
-    attr_accessor :selection
+    attr_writer(:selection)
   end
 
   class << self
@@ -283,6 +296,7 @@ class ROV
       when 'e' then close_active_child
       when '0'..'9' then open_tree_level(cmd.to_i)
       when 'i' then idbg_ext_log
+      when 'p' then open_parallel_children
       end
     end
 
@@ -386,6 +400,42 @@ class ROV
   def idbg_ext_log
     return unless Object.const_defined?("IDbg")
     IDbg.log("ROV", @variable_name + active_var_path, active_ctx.active_child)
+  end
+
+  def open_parallel_children
+    # Find first enumerable parent.
+    enumerable_parent_ctx = active_ctx
+    trail = []
+
+    while enumerable_parent_ctx
+      break if enumerable_parent_ctx.is_list
+
+      trail.unshift(enumerable_parent_ctx.selection)
+
+      enumerable_parent_ctx = enumerable_parent_ctx.parent_ctx
+    end
+    return unless enumerable_parent_ctx
+
+    # Set expected type.
+    expected_class = enumerable_parent_ctx.active_child.class
+
+    # Check if all child is the same.
+    is_uniform = enumerable_parent_ctx.obj.to_a.all? { |e| e.is_a?(expected_class) }
+
+    return unless is_uniform
+
+    enumerable_parent_ctx.children_size.times do |i|
+      next unless enumerable_parent_ctx.child_openable?(i)
+
+      trail_ctx = enumerable_parent_ctx.open_nth_child(i)
+
+      # trail.shift # First item is the current iteration.
+      trail.each do |child_idx|
+        break unless trail_ctx.child_openable?(child_idx)
+
+        trail_ctx = trail_ctx.open_nth_child(child_idx)
+      end
+    end
   end
 
   def active_var_path
