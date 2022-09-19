@@ -319,27 +319,45 @@ class ROV
     raise
   end
 
+  #
+  # Quit.
+  #
   def stop_loop
     @is_running = false
   end
 
+  #
+  # Set current CTX to the parent.
+  #
   def step_parent
     self.active_ctx = active_ctx.parent_ctx unless active_ctx.parent_ctx.nil?
   end
 
+  #
+  # Set current CTX to active child.
+  #
   def step_child
     self.active_ctx = active_ctx.open_active_child if active_ctx.active_child_openable?
   end
 
+  #
+  # Set current CTX to root.
+  #
   def step_home
     self.active_ctx = root_ctx
     active_ctx.select_first
   end
 
+  #
+  # Clost current CTX active child.
+  #
   def close_active_child
     active_ctx.close_active_child
   end
 
+  #
+  # Set active CTX to previous child or previous opened subtree last leaf.
+  #
   def step_up
     if active_ctx.at_first_child?
       if active_ctx.parent_ctx
@@ -363,6 +381,9 @@ class ROV
     end
   end
 
+  #
+  # Set active CTX to next child or next opened subtree first node.
+  #
   def step_down
     if active_ctx.active_child_open?
       self.active_ctx = active_ctx.open_active_child
@@ -382,6 +403,9 @@ class ROV
     active_ctx.select_next
   end
 
+  #
+  # Open all nodes on level N.
+  #
   def open_tree_level(n)
     while n < active_ctx.current_level
       self.active_ctx = active_ctx.parent_ctx
