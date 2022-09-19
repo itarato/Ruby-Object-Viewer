@@ -285,21 +285,28 @@ class ROV
 
     while @is_running
       print_root
-
-      case (cmd = read_char)
-      when 'q' then stop_loop
-      when 'w' then step_up
-      when 's' then step_down
-      when 'a' then step_parent
-      when 'd' then step_child
-      when 'h' then step_home
-      when 'e' then close_active_child
-      when '0'..'9' then open_tree_level(cmd.to_i)
-      when 'i' then idbg_ext_log
-      when 'p' then open_parallel_children
-      end
+      execute(read_char)
     end
 
+    current_variable_as_expression
+  end
+
+  def execute(input)
+    case input
+    when 'q' then stop_loop
+    when 'w' then step_up
+    when 's' then step_down
+    when 'a' then step_parent
+    when 'd' then step_child
+    when 'h' then step_home
+    when 'e' then close_active_child
+    when '0'..'9' then open_tree_level(input.to_i)
+    when 'i' then idbg_ext_log
+    when 'p' then open_parallel_children
+    end
+  end
+
+  def current_variable_as_expression
     @variable_name + active_var_path
   end
 
@@ -399,7 +406,7 @@ class ROV
 
   def idbg_ext_log
     return unless Object.const_defined?("IDbg")
-    IDbg.log("ROV", @variable_name + active_var_path, active_ctx.active_child)
+    IDbg.log("ROV", current_variable_as_expression, active_ctx.active_child)
   end
 
   def open_parallel_children
