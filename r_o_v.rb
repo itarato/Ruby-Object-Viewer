@@ -174,6 +174,7 @@ class ROV
 
     def child_openable?(index)
       case (elem = child_at(index))
+      when IO then elem.instance_variables.size > 0
       when Enumerable then elem.to_a.size > 0
       else elem.instance_variables.size > 0
       end
