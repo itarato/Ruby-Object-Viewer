@@ -1,4 +1,4 @@
-require_relative('data')
-require_relative('../r_o_v')
+require_relative('./data.rb')
+require_relative('../lib/r_o_v')
 
-ROV[organism]
+ROV[Organism.new]

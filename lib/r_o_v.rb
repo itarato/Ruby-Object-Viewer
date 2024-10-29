@@ -110,13 +110,7 @@ class ROV
     end
 
     def children_size
-      @children_size ||= case obj
-      when Enumerable
-        obj.respond_to?(:size) ? obj.size : obj.to_a.size
-      # TODO Maybe this can coexist with enumerable (eg sg that fakes enumarable).
-      else
-        obj.instance_variables.size
-      end
+      @children_size ||= children_names.size
     end
 
     def has_children?
@@ -126,8 +120,15 @@ class ROV
     def children_names
       @children_names ||= case obj
       when Hash then obj.keys
-      when Enumerable then children_size.times.to_a
-      else obj.instance_variables
+      when Enumerable
+        size = obj.respond_to?(:size) ? obj.size : obj.to_a.size
+        size.times.to_a
+      else
+        if Object.const_defined?("ActiveRecord::ModelSchema") && obj.is_a?(ActiveRecord::ModelSchema)
+          obj.class.columns.map(&:name)
+        else
+          obj.instance_variables
+        end
       end
     end
 
@@ -138,7 +139,12 @@ class ROV
       case obj
       when Hash then obj.values[index]
       when Enumerable then obj.to_a[index]
-      else obj.instance_variable_get(obj.instance_variables[index])
+      else
+        if Object.const_defined?("ActiveRecord::ModelSchema") && obj.is_a?(ActiveRecord::ModelSchema)
+          obj[obj.class.columns[index].name]
+        else
+          obj.instance_variable_get(obj.instance_variables[index])
+        end
       end
     end
 
@@ -164,7 +170,11 @@ class ROV
       when Enumerable
         "[#{selection}]"
       else
-        ".#{obj.instance_variables[selection][1..-1]}"
+        if Object.const_defined?("ActiveRecord::ModelSchema") && obj.is_a?(ActiveRecord::ModelSchema)
+          ".#{obj.class.columns[selection].name}"
+        else
+          ".#{obj.instance_variables[selection][1..-1]}"
+        end
       end
     end
 
