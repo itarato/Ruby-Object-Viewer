@@ -8,6 +8,9 @@
 # - memory slabs
 
 class ROV
+  #
+  # Shared things.
+  #
   class Util
     class << self
       def red(s); escape(s, 91); end
@@ -66,6 +69,87 @@ class ROV
     end
   end
 
+  #
+  # The descriptor for various types: how should they behave in the viewer.
+  #
+  class AbstractTypeBehaviour
+    def type_of?(obj)
+      raise(NotImplementedError)
+    end
+
+    def children_names(obj)
+      raise(NotImplementedError)
+    end
+
+    def child_at(obj, index)
+      raise(NotImplementedError)
+    end
+
+    def child_var_name(obj, index)
+      raise(NotImplementedError)
+    end
+  end
+
+  class HashTypeBehaviour < AbstractTypeBehaviour
+    def type_of?(obj)
+      obj.is_a?(Hash)
+    end
+
+    def children_names(obj)
+      obj.keys
+    end
+
+    def child_at(obj, index)
+      obj.values[index]
+    end
+  end
+
+  class EnumerableTypeBehaviour < AbstractTypeBehaviour
+    def type_of?(obj)
+      obj.is_a?(Enumerable)
+    end
+
+    def children_names(obj)
+      size = obj.respond_to?(:size) ? obj.size : obj.to_a.size
+      size.times.to_a
+    end
+
+    def child_at(obj, index)
+      obj.to_a[index]
+    end
+  end
+
+  class ActiveRecordModelSchemaTypeBehaviour < AbstractTypeBehaviour
+    def type_of?(obj)
+      Object.const_defined?("ActiveRecord::ModelSchema") && obj.is_a?(ActiveRecord::ModelSchema)
+    end
+
+    def children_names(obj)
+      obj.class.columns.map(&:name)
+    end
+
+    def child_at(obj, index)
+      obj[obj.class.columns[index].name]
+    end
+  end
+
+  class GenericObjectTypeBehaviour < AbstractTypeBehaviour
+    def type_of?(obj)
+      true
+    end
+
+    def children_names(obj)
+      obj.instance_variables
+    end
+
+    def child_at(obj, index)
+      obj.instance_variable_get(obj.instance_variables[index])
+    end
+  end
+
+  #
+  # Represents an object (~level).
+  #
   class Ctx
     attr_reader(:parent_ctx)
     attr_reader(:children_ctx)
@@ -73,6 +157,13 @@ class ROV
     attr_reader(:current_level)
     attr_reader(:obj)
     attr_reader(:selection)
+
+    TYPE_BEHAVIOURS = [
+      HashTypeBehaviour.new,
+      EnumerableTypeBehaviour.new,
+      ActiveRecordModelSchemaTypeBehaviour.new,
+      GenericObjectTypeBehaviour.new,
+    ]
 
     def initialize(obj, parent_ctx, current_level:)
       @obj = obj
@@ -118,34 +209,28 @@ class ROV
     end
 
     def children_names
-      @children_names ||= case obj
-      when Hash then obj.keys
-      when Enumerable
-        size = obj.respond_to?(:size) ? obj.size : obj.to_a.size
-        size.times.to_a
-      else
-        if Object.const_defined?("ActiveRecord::ModelSchema") && obj.is_a?(ActiveRecord::ModelSchema)
-          obj.class.columns.map(&:name)
-        else
-          obj.instance_variables
+      return @children_names if defined?(@children_names)
+
+      TYPE_BEHAVIOURS.each do |type_behaviour|
+        if type_behaviour.type_of?(obj)
+          return @children_names = type_behaviour.children_names(obj)
         end
       end
+
+      raise("No type behaviour has found")
     end
 
     #
     # Actual object children (raw object).
     #
     def child_at(index)
-      case obj
-      when Hash then obj.values[index]
-      when Enumerable then obj.to_a[index]
-      else
-        if Object.const_defined?("ActiveRecord::ModelSchema") && obj.is_a?(ActiveRecord::ModelSchema)
-          obj[obj.class.columns[index].name]
-        else
-          obj.instance_variable_get(obj.instance_variables[index])
+      TYPE_BEHAVIOURS.each do |type_behaviour|
+        if type_behaviour.type_of?(obj)
+          return type_behaviour.child_at(obj, index)
         end
       end
+
+      raise("No type behaviour has found")
     end
 
     def active_child
