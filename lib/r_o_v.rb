@@ -15,7 +15,6 @@
 #
 
 # TODO:
-# - close parent should work on the child too (go to parent and then close)
 # - sluggishness on M1 + Rails + pry
 # - fuzzy search - jump
 # - memory slabs
@@ -352,8 +351,14 @@ class ROV
     end
 
     # TODO: Lets not lose the object, lets have a prop for closed.
+    # @return Boolean - whether there was anything closed
     def close_active_child
-      children_ctx[selection] = nil
+      if children_ctx[selection] != nil
+        children_ctx[selection] = nil
+        true
+      else
+        false
+      end
     end
 
     def close_children
@@ -502,7 +507,10 @@ class ROV
   # Clost current CTX active child.
   #
   def close_active_child
-    active_ctx.close_active_child
+    if !active_ctx.close_active_child
+      step_parent
+      active_ctx.close_active_child
+    end
   end
 
   #
