@@ -237,9 +237,11 @@ class ROV
 
     attr_reader(:parent_ctx)
     attr_reader(:children_ctx)
-    attr_reader(:tag)
+    # Level in the tree counting from the root.
     attr_reader(:current_level)
+    # The main object represented.
     attr_reader(:obj)
+    # Active (selected) index of the children.
     attr_reader(:selection)
 
 
@@ -248,7 +250,6 @@ class ROV
       @parent_ctx = parent_ctx
       @selection = children_size > 0 ? 0 : nil
       @children_ctx = [nil] * children_size
-      @tag = obj.class.name
       @current_level = current_level
     end
 
@@ -372,22 +373,22 @@ class ROV
       out = []
 
       children_names.zip(children_ctx).each_with_index do |(elem_name, child_ctx), index|
-        value_suffix = child_openable?(index) ? '' : " = #{Util.cyan(child_at(index).to_s)}"
-        tag_suffix = " (#{Util.magenta(child_at(index).class.name)})#{value_suffix}"
+        child_object = child_at(index)
+        value_suffix = child_openable?(index) ? '' : " = #{Util.cyan(child_object.to_s)}"
+        tag_suffix = " (#{Util.magenta(child_object.class.name)})#{value_suffix}"
 
         is_active_line = self == active_ctx && selection == index
         active_pos_marker = is_active_line ? '>' : ' '
         nesting_symbol = index == children_size - 1 ? '└' : '├'
         tree_more_symbol = child_openable?(index) ? '+ ': ' '
 
-        line = <<~LINE.lines(chomp: true).join
-          #{indent}
-          #{Util.bold(Util.yellow(active_pos_marker))}
-          #{nesting_symbol}─
-          #{tree_more_symbol}
-          #{is_active_line ? Util.invert(Util.blue(elem_name)) : Util.blue(elem_name)}
-          #{tag_suffix}
-        LINE
+        line = indent +
+          Util.bold(Util.yellow(active_pos_marker)) +
+          nesting_symbol +
+          "─" +
+          tree_more_symbol +
+          (is_active_line ? Util.invert(Util.blue(elem_name)) : Util.blue(elem_name)) +
+          tag_suffix
 
         out << [line, is_active_line]
 
@@ -641,7 +642,7 @@ class ROV
   def print_root
     clear_terminal
 
-    lines = [[Util.magenta(root_ctx.tag) + ":", false]]
+    lines = [[Util.magenta(root_ctx.obj.class.name) + ":", false]]
     lines += root_ctx.pretty_print(active_ctx)
     active_line_index = lines.index { |_, is_active| is_active }
 
