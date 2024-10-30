@@ -10,6 +10,7 @@
 # 0..9: open levels until N depth
 # i: log current position (into idbg)
 # p: open parallel children (on exact match)
+# r: refresh screen (+ update bounds)
 # q: quit
 #
 
