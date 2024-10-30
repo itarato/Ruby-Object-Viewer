@@ -1,10 +1,22 @@
 # frozen_string_literal: true
 
+#
+# Ruby Object Viewer
+#
+# Usage:
+# w/s/a/b: step (to siblings, parents, child)
+# e: close child
+# h: go home
+# 0..9: open levels until N depth
+# i: log current position (into idbg)
+# p: open parallel children (on exact match)
+# q: quit
+#
+
 # TODO:
 # - close parent should work on the child too (go to parent and then close)
 # - sluggishness on M1 + Rails + pry
 # - fuzzy search - jump
-# - parallel open (same trail)
 # - memory slabs
 
 class ROV
@@ -433,6 +445,7 @@ class ROV
     when '0'..'9' then open_tree_level(input.to_i)
     when 'i' then idbg_ext_log
     when 'p' then open_parallel_children
+    when 'r' then @terminal_width = Util.console_cols
     end
   end
 
