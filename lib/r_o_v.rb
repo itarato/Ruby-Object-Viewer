@@ -82,6 +82,18 @@ class ROV
     end
   end
 
+  module Cache
+    def __cache
+      @__cache = {} if !defined?(@__cache)
+      @__cache
+    end
+
+    def cache(key)
+      __cache[key] = yield if !__cache.key?(key)
+      __cache[key]
+    end
+  end
+
   #
   # The descriptor for various types: how should they behave in the viewer.
   #
@@ -200,17 +212,7 @@ class ROV
     end
   end
 
-  #
-  # Represents an object (~level).
-  #
-  class Ctx
-    attr_reader(:parent_ctx)
-    attr_reader(:children_ctx)
-    attr_reader(:tag)
-    attr_reader(:current_level)
-    attr_reader(:obj)
-    attr_reader(:selection)
-
+  module TypeBehaviour
     TYPE_BEHAVIOURS = [
       IOTypeBehaviour.new,
       HashTypeBehaviour.new,
@@ -218,6 +220,29 @@ class ROV
       ActiveRecordModelSchemaTypeBehaviour.new,
       GenericObjectTypeBehaviour.new,
     ]
+
+    def self.for(obj)
+      TYPE_BEHAVIOURS.each do |type_behaviour|
+        return type_behaviour if type_behaviour.type_of?(obj)
+      end
+
+      raise("Cannot find type handler for #{obj}")
+    end
+  end
+
+  #
+  # Represents an object (~level).
+  #
+  class Ctx
+    include(Cache)
+
+    attr_reader(:parent_ctx)
+    attr_reader(:children_ctx)
+    attr_reader(:tag)
+    attr_reader(:current_level)
+    attr_reader(:obj)
+    attr_reader(:selection)
+
 
     def initialize(obj, parent_ctx, current_level:)
       @obj = obj
@@ -263,28 +288,18 @@ class ROV
     end
 
     def children_names
-      return @children_names if defined?(@children_names)
-
-      TYPE_BEHAVIOURS.each do |type_behaviour|
-        if type_behaviour.type_of?(obj)
-          return @children_names = type_behaviour.children_names(obj)
-        end
+      cache("children_names") do
+        TypeBehaviour.for(obj).children_names(obj)
       end
-
-      raise("No type behaviour has found")
     end
 
     #
     # Actual object children (raw object).
     #
     def child_at(index)
-      TYPE_BEHAVIOURS.each do |type_behaviour|
-        if type_behaviour.type_of?(obj)
-          return type_behaviour.child_at(obj, index)
-        end
+      cache("child_at_#{index}") do
+        TypeBehaviour.for(obj).child_at(obj, index)
       end
-
-      raise("No type behaviour has found")
     end
 
     def active_child
@@ -297,13 +312,9 @@ class ROV
     end
 
     def active_child_var_name
-      TYPE_BEHAVIOURS.each do |type_behaviour|
-        if type_behaviour.type_of?(obj)
-          return type_behaviour.child_var_name(obj, selection)
-        end
+      cache("active_child_var_name_#{selection}") do
+        TypeBehaviour.for(obj).child_var_name(obj, selection)
       end
-
-      raise("No type behaviour has found")
     end
 
     def active_child_open?
@@ -311,15 +322,10 @@ class ROV
     end
 
     def child_openable?(index)
-      elem = child_at(index)
-
-      TYPE_BEHAVIOURS.each do |type_behaviour|
-        if type_behaviour.type_of?(elem)
-          return type_behaviour.children_names(elem).size > 0
-        end
+      cache("child_openable?_#{index}") do
+        elem = child_at(index)
+        TypeBehaviour.for(elem).children_names(elem).size > 0
       end
-
-      raise("No type behaviour has found")
     end
 
     def active_child_openable?
