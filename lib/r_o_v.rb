@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require("io/console")
+
 #
 # Ruby Object Viewer
 #
@@ -442,10 +444,14 @@ class ROV
   def loop
     return unless root_ctx.has_children?
 
+    system('stty', '-echo')
+
     while @is_running
       print_root
       execute(read_char)
     end
+
+    system('stty', 'echo')
 
     current_variable_as_expression
   end
@@ -678,10 +684,7 @@ class ROV
   end
 
   def read_char
-    system('stty', 'raw', '-echo')
-    char = STDIN.getc
-    system('stty', '-raw', 'echo')
-    char
+    STDIN.getch
   end
 
   def get_input_presentation
