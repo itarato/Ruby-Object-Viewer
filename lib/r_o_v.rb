@@ -235,7 +235,9 @@ class ROV
   class Ctx
     include(Cache)
 
+    # Parent context - if there is one.
     attr_reader(:parent_ctx)
+    # Context list for the children.
     attr_reader(:children_ctx)
     # Level in the tree counting from the root.
     attr_reader(:current_level)
@@ -280,7 +282,9 @@ class ROV
     end
 
     def children_size
-      @children_size ||= children_names.size
+      cache("children_size") do
+        children_names.size
+      end
     end
 
     def has_children?
