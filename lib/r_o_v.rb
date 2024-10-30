@@ -90,6 +90,24 @@ class ROV
     end
   end
 
+  class IOTypeBehaviour < AbstractTypeBehaviour
+    def type_of?(obj)
+      obj.is_a?(IO)
+    end
+
+    def children_names(obj)
+      obj.instance_variables
+    end
+
+    def child_at(obj, index)
+      obj.instance_variable_get(obj.instance_variables[index])
+    end
+
+    def child_var_name(obj, index)
+      ".#{obj.instance_variables[index][1..-1]}"
+    end
+  end
+
   class HashTypeBehaviour < AbstractTypeBehaviour
     def type_of?(obj)
       obj.is_a?(Hash)
@@ -101,6 +119,16 @@ class ROV
 
     def child_at(obj, index)
       obj.values[index]
+    end
+
+    def child_var_name(obj, index)
+      key = obj.keys[index]
+
+      if Util.simple_type?(key)
+        "[#{key.inspect.gsub('"', '\'')}]"
+      else
+        ".values[#{index}]"
+      end
     end
   end
 
@@ -117,6 +145,10 @@ class ROV
     def child_at(obj, index)
       obj.to_a[index]
     end
+
+    def child_var_name(obj, index)
+      "[#{index}]"
+    end
   end
 
   class ActiveRecordModelSchemaTypeBehaviour < AbstractTypeBehaviour
@@ -130,6 +162,10 @@ class ROV
 
     def child_at(obj, index)
       obj[obj.class.columns[index].name]
+    end
+
+    def child_var_name(obj, index)
+      ".#{obj.class.columns[index].name}"
     end
   end
 
@@ -145,6 +181,10 @@ class ROV
     def child_at(obj, index)
       obj.instance_variable_get(obj.instance_variables[index])
     end
+
+    def child_var_name(obj, index)
+      ".#{obj.instance_variables[index][1..-1]}"
+    end
   end
 
   #
@@ -159,6 +199,7 @@ class ROV
     attr_reader(:selection)
 
     TYPE_BEHAVIOURS = [
+      IOTypeBehaviour.new,
       HashTypeBehaviour.new,
       EnumerableTypeBehaviour.new,
       ActiveRecordModelSchemaTypeBehaviour.new,
@@ -243,24 +284,13 @@ class ROV
     end
 
     def active_child_var_name
-      case obj
-      when Hash
-        key = obj.keys[selection]
-
-        if Util.simple_type?(key)
-          "[#{key.inspect.gsub('"', '\'')}]"
-        else
-          ".values[#{selection}]"
-        end
-      when Enumerable
-        "[#{selection}]"
-      else
-        if Object.const_defined?("ActiveRecord::ModelSchema") && obj.is_a?(ActiveRecord::ModelSchema)
-          ".#{obj.class.columns[selection].name}"
-        else
-          ".#{obj.instance_variables[selection][1..-1]}"
+      TYPE_BEHAVIOURS.each do |type_behaviour|
+        if type_behaviour.type_of?(obj)
+          return type_behaviour.child_var_name(obj, selection)
         end
       end
+
+      raise("No type behaviour has found")
     end
 
     def active_child_open?
@@ -268,11 +298,15 @@ class ROV
     end
 
     def child_openable?(index)
-      case (elem = child_at(index))
-      when IO then elem.instance_variables.size > 0
-      when Enumerable then elem.to_a.size > 0
-      else elem.instance_variables.size > 0
+      elem = child_at(index)
+
+      TYPE_BEHAVIOURS.each do |type_behaviour|
+        if type_behaviour.type_of?(elem)
+          return type_behaviour.children_names(elem).size > 0
+        end
       end
+
+      raise("No type behaviour has found")
     end
 
     def active_child_openable?
