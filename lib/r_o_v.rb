@@ -183,15 +183,35 @@ class ROV
     end
 
     def children_names(obj)
-      obj.class.columns.map(&:name)
+      names = []
+
+      names += obj.class.columns.map(&:name)
+      names += obj.class.reflect_on_all_associations.map(&:name)
+
+      names
     end
 
     def child_at(obj, index)
-      obj[obj.class.columns[index].name]
+      columns = obj.class.columns
+      if index < columns.size
+        return obj[columns[index].name]
+      end
+
+      relations = obj.class.reflect_on_all_associations
+      if index < columns.size + relations.size
+        relation = obj.send(relations[index - columns.size].name)
+        if relation.is_a?(ActiveRecord::Associations::CollectionProxy)
+          return relation.to_a
+        else
+          return relation
+        end
+      end
+
+      raise("Invalid index #{index}")
     end
 
     def child_var_name(obj, index)
-      ".#{obj.class.columns[index].name}"
+      ".#{children_names(obj)[index]}"
     end
   end
 
@@ -451,9 +471,14 @@ class ROV
       execute(read_char)
     end
 
-    system('stty', 'echo')
-
     current_variable_as_expression
+  rescue => err
+    print(err)
+    puts(err.backtrace)
+
+    raise(err)
+  ensure
+    system('stty', 'echo')
   end
 
   def execute(input)
