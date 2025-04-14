@@ -17,7 +17,6 @@ require("io/console")
 #
 
 # TODO:
-# - sluggishness on M1 + Rails + pry
 # - fuzzy search - jump
 # - memory slabs
 
@@ -151,7 +150,7 @@ class ROV
       key = obj.keys[index]
 
       if Util.simple_type?(key)
-        "[#{key.inspect.gsub('"', '\'')}]"
+        "[#{key.inspect.tr('"', '\'')}]"
       else
         ".values[#{index}]"
       end
@@ -406,7 +405,7 @@ class ROV
         is_active_line = self == active_ctx && selection == index
         active_pos_marker = is_active_line ? '>' : ' '
         nesting_symbol = index == children_size - 1 ? '└' : '├'
-        tree_more_symbol = child_openable?(index) ? '+ ': ' '
+        tree_more_symbol = child_openable?(index) ? '+ ' : ' '
 
         line = indent +
           Util.bold(Util.yellow(active_pos_marker)) +
@@ -457,8 +456,9 @@ class ROV
   def initialize(obj)
     @root_ctx = @active_ctx = Ctx.new(obj, nil, current_level: 0)
     @is_running = true
-    @terminal_width = Util.console_cols
     @variable_name = get_input_presentation
+
+    refresh_terminal_size
   end
 
   def loop
@@ -493,7 +493,7 @@ class ROV
     when '0'..'9' then open_tree_level(input.to_i)
     when 'i' then idbg_ext_log
     when 'p' then open_parallel_children
-    when 'r' then @terminal_width = Util.console_cols
+    when 'r' then refresh_terminal_size
     end
   end
 
@@ -508,6 +508,11 @@ class ROV
 
   def root_ctx=
     raise
+  end
+
+  def refresh_terminal_size
+    @terminal_width = Util.console_cols
+    @terminal_height = Util.console_lines
   end
 
   #
@@ -681,14 +686,14 @@ class ROV
     lines += root_ctx.pretty_print(active_ctx)
     active_line_index = lines.index { |_, is_active| is_active }
 
-    puts (lines[presentable_line_range(active_line_index, lines.size)].map do |line, _|
+    puts(lines[presentable_line_range(active_line_index, lines.size)].map do |line, _|
       Util.visible_truncate(line, @terminal_width)
     end.join("\n"))
     puts "\n📋 #{@variable_name}#{Util.green(active_var_path)}"
   end
 
   def presentable_line_range(mid_index, len)
-    padding = (Util.console_lines - 4) / 2
+    padding = (@terminal_height - 4) / 2
 
     if mid_index <= padding
       from = 0
@@ -705,7 +710,7 @@ class ROV
   end
 
   def clear_terminal
-    print `clear`
+    print("\x1B[2J\x1B[H")
   end
 
   def read_char
