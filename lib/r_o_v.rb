@@ -193,16 +193,24 @@ class ROV
     def child_at(obj, index)
       columns = obj.class.columns
       if index < columns.size
-        return obj[columns[index].name]
+        begin
+          return obj[columns[index].name]
+        rescue
+          return :error_unloaded
+        end
       end
 
       relations = obj.class.reflect_on_all_associations
       if index < columns.size + relations.size
-        relation = obj.send(relations[index - columns.size].name)
-        if relation.is_a?(ActiveRecord::Associations::CollectionProxy)
-          return relation.to_a
-        else
-          return relation
+        begin
+          relation = obj.send(relations[index - columns.size].name)
+          if relation.is_a?(ActiveRecord::Associations::CollectionProxy)
+            return relation.to_a
+          else
+            return relation
+          end
+        rescue
+          return :error_unloaded_relationship
         end
       end
 
